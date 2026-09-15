@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/EnergyTrade.Api/EnergyTrade.Api.csproj" />
+    <Project Path="src/EnergyTrade.Application/EnergyTrade.Application.csproj" />
+    <Project Path="src/EnergyTrade.Domain/EnergyTrade.Domain.csproj" />
+    <Project Path="src/EnergyTrade.Infrastructure/EnergyTrade.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/EnergyTrade.Application.Tests/EnergyTrade.Application.Tests.csproj" />
+    <Project Path="tests/EnergyTrade.Domain.Tests/EnergyTrade.Domain.Tests.csproj" />
+    <Project Path="tests/EnergyTrade.IntegrationTests/EnergyTrade.IntegrationTests.csproj" />
+  </Folder>
+</Solution>
