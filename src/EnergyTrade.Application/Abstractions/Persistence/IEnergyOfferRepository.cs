@@ -11,4 +11,7 @@ public interface IEnergyOfferRepository
     Task<EnergyOffer?> GetByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<EnergyOffer>> GetAllAsync(
+        CancellationToken cancellationToken = default);
 }

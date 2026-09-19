@@ -70,3 +70,7 @@ GET http://localhost:5087/api/energy-offers/96a4ad46-1143-43f8-8989-e53e45d5bbd0
 ###
 
 GET http://localhost:5087/api/energy-offers/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+
+###
+
+GET http://localhost:5087/api/energy-offers

@@ -1,6 +1,7 @@
 using EnergyTrade.Application.EnergyOffers.Create;
 using Microsoft.AspNetCore.Mvc;
 using EnergyTrade.Application.EnergyOffers.GetById;
+using EnergyTrade.Application.EnergyOffers.GetAll;
 
 namespace EnergyTrade.Api.Controllers;
 
@@ -12,12 +13,16 @@ public class EnergyOffersController : ControllerBase
 
     private readonly GetEnergyOfferByIdService _getEnergyOfferByIdService;
 
+    private readonly GetEnergyOffersService _getEnergyOffersService;
+
     public EnergyOffersController(
         CreateEnergyOfferService createEnergyOfferService,
-        GetEnergyOfferByIdService getEnergyOfferByIdService)
+        GetEnergyOfferByIdService getEnergyOfferByIdService,
+        GetEnergyOffersService getEnergyOffersService)
     {
         _createEnergyOfferService = createEnergyOfferService;
         _getEnergyOfferByIdService = getEnergyOfferByIdService;
+        _getEnergyOffersService = getEnergyOffersService;
     }
 
     [HttpPost]
@@ -47,6 +52,16 @@ public class EnergyOffersController : ControllerBase
         {
             return NotFound();
         }
+
+        return Ok(result);
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyList<GetEnergyOffersResult>>> GetAll(
+        CancellationToken cancellationToken)
+    {
+        var result = await _getEnergyOffersService.ExecuteAsync(
+            cancellationToken);
 
         return Ok(result);
     }
