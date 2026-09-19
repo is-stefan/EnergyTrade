@@ -18,6 +18,8 @@ Content-Type: application/json
   "deliveryEnd": "2026-10-31T00:00:00+00:00"
 }
 
+###
+
 POST http://localhost:5087/api/energy-offers
 Content-Type: application/json
 
@@ -30,6 +32,8 @@ Content-Type: application/json
   "deliveryStart": "2026-10-01T00:00:00+00:00",
   "deliveryEnd": "2026-10-31T00:00:00+00:00"
 }
+
+###
 
 POST http://localhost:5087/api/energy-offers
 Content-Type: application/json
@@ -44,6 +48,8 @@ Content-Type: application/json
   "deliveryEnd": "2026-10-31T00:00:00+00:00"
 }
 
+###
+
 POST http://localhost:5087/api/energy-offers
 Content-Type: application/json
 
@@ -56,3 +62,11 @@ Content-Type: application/json
   "deliveryStart": "2026-11-01T00:00:00+00:00",
   "deliveryEnd": "2026-10-31T00:00:00+00:00"
 }
+
+###
+
+GET http://localhost:5087/api/energy-offers/96a4ad46-1143-43f8-8989-e53e45d5bbd0
+
+###
+
+GET http://localhost:5087/api/energy-offers/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
