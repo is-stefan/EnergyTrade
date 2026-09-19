@@ -1,4 +1,5 @@
 using EnergyTrade.Domain.Entities;
+using EnergyTrade.Domain.Enums;
 
 namespace EnergyTrade.Application.Abstractions.Persistence;
 
@@ -13,5 +14,7 @@ public interface IEnergyOfferRepository
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<EnergyOffer>> GetAllAsync(
+        OfferStatus? status = null,
+        EnergyType? energyType = null,
         CancellationToken cancellationToken = default);
 }

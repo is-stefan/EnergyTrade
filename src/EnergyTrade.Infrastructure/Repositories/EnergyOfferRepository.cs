@@ -1,5 +1,6 @@
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Domain.Entities;
+using EnergyTrade.Domain.Enums;
 using EnergyTrade.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,16 +30,33 @@ public sealed class EnergyOfferRepository : IEnergyOfferRepository
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        return await _dbContext.EnergyOffers.FirstOrDefaultAsync(
-            offer => offer.Id == id,
-            cancellationToken);
+        return await _dbContext.EnergyOffers
+            .FirstOrDefaultAsync(
+                offer => offer.Id == id,
+                cancellationToken);
     }
 
     public async Task<IReadOnlyList<EnergyOffer>> GetAllAsync(
+        OfferStatus? status = null,
+        EnergyType? energyType = null,
         CancellationToken cancellationToken = default)
     {
-        return await _dbContext.EnergyOffers
-        .AsNoTracking()
-        .ToListAsync(cancellationToken);
+        var query = _dbContext.EnergyOffers
+            .AsNoTracking()
+            .AsQueryable();
+
+        if (status.HasValue)
+        {
+            query = query.Where(
+                offer => offer.Status == status.Value);
+        }
+
+        if (energyType.HasValue)
+        {
+            query = query.Where(
+                offer => offer.EnergyType == energyType.Value);
+        }
+
+        return await query.ToListAsync(cancellationToken);
     }
 }
