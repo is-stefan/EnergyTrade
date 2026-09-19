@@ -70,6 +70,13 @@ public class CreateEnergyOfferServiceTests
 
             return Task.CompletedTask;
         }
+
+        public Task<EnergyOffer?> GetByIdAsync(
+            Guid id,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<EnergyOffer?>(null);
+        }
     }
 
     [Fact]

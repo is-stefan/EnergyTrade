@@ -1,6 +1,7 @@
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace EnergyTrade.Infrastructure.Repositories;
 
@@ -22,5 +23,14 @@ public sealed class EnergyOfferRepository : IEnergyOfferRepository
             cancellationToken);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<EnergyOffer?> GetByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.EnergyOffers.FirstOrDefaultAsync(
+            offer => offer.Id == id,
+            cancellationToken);
     }
 }
