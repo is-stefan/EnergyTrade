@@ -33,4 +33,12 @@ public sealed class EnergyOfferRepository : IEnergyOfferRepository
             offer => offer.Id == id,
             cancellationToken);
     }
+
+    public async Task<IReadOnlyList<EnergyOffer>> GetAllAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.EnergyOffers
+        .AsNoTracking()
+        .ToListAsync(cancellationToken);
+    }
 }
