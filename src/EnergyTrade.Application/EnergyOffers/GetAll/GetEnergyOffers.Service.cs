@@ -1,4 +1,5 @@
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Domain.Enums;
 
 namespace EnergyTrade.Application.EnergyOffers.GetAll;
 
@@ -13,9 +14,13 @@ public sealed class GetEnergyOffersService
     }
 
     public async Task<IReadOnlyList<GetEnergyOffersResult>> ExecuteAsync(
+        OfferStatus? status = null,
+        EnergyType? energyType = null,
         CancellationToken cancellationToken = default)
     {
         var offers = await _energyOfferRepository.GetAllAsync(
+            status,
+            energyType,
             cancellationToken);
 
         return offers

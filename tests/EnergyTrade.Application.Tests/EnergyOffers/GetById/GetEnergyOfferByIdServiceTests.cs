@@ -88,7 +88,9 @@ public class GetEnergyOfferByIdServiceTests
         }
 
         public Task<IReadOnlyList<EnergyOffer>> GetAllAsync(
-        CancellationToken cancellationToken = default)
+            OfferStatus? status = null,
+            EnergyType? energyType = null,
+            CancellationToken cancellationToken = default)
         {
             return Task.FromResult<IReadOnlyList<EnergyOffer>>(
                 Array.Empty<EnergyOffer>());

@@ -2,6 +2,7 @@ using EnergyTrade.Application.EnergyOffers.Create;
 using Microsoft.AspNetCore.Mvc;
 using EnergyTrade.Application.EnergyOffers.GetById;
 using EnergyTrade.Application.EnergyOffers.GetAll;
+using EnergyTrade.Domain.Enums;
 
 namespace EnergyTrade.Api.Controllers;
 
@@ -58,9 +59,13 @@ public class EnergyOffersController : ControllerBase
 
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<GetEnergyOffersResult>>> GetAll(
+        [FromQuery] OfferStatus? status,
+        [FromQuery] EnergyType? energyType,
         CancellationToken cancellationToken)
     {
         var result = await _getEnergyOffersService.ExecuteAsync(
+            status,
+            energyType,
             cancellationToken);
 
         return Ok(result);
