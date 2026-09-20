@@ -73,14 +73,18 @@ public class EnergyOffersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<GetEnergyOffersResult>>> GetAll(
+    public async Task<ActionResult<PagedEnergyOffersResult>> GetAll(
         [FromQuery] OfferStatus? status,
         [FromQuery] EnergyType? energyType,
-        CancellationToken cancellationToken)
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
     {
         var result = await _getEnergyOffersService.ExecuteAsync(
             status,
             energyType,
+            page,
+            pageSize,
             cancellationToken);
 
         return Ok(result);

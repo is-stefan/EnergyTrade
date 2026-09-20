@@ -106,10 +106,20 @@ public class CancelEnergyOfferServiceTests
         public Task<IReadOnlyList<EnergyOffer>> GetAllAsync(
             OfferStatus? status = null,
             EnergyType? energyType = null,
+            int page = 1,
+            int pageSize = 10,
             CancellationToken cancellationToken = default)
         {
             return Task.FromResult<IReadOnlyList<EnergyOffer>>(
                 Array.Empty<EnergyOffer>());
+        }
+
+        public Task<int> CountAsync(
+            OfferStatus? status = null,
+            EnergyType? energyType = null,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(0);
         }
 
         public Task SaveChangesAsync(
