@@ -17,4 +17,7 @@ public interface IEnergyOfferRepository
         OfferStatus? status = null,
         EnergyType? energyType = null,
         CancellationToken cancellationToken = default);
+
+    Task SaveChangesAsync(
+    CancellationToken cancellationToken = default);
 }

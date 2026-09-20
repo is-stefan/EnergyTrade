@@ -87,6 +87,12 @@ public class CreateEnergyOfferServiceTests
                 Array.Empty<EnergyOffer>());
         }
 
+        public Task SaveChangesAsync(
+            CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+
     }
 
     [Fact]

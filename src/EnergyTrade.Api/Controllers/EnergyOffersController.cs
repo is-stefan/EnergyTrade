@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using EnergyTrade.Application.EnergyOffers.GetById;
 using EnergyTrade.Application.EnergyOffers.GetAll;
 using EnergyTrade.Domain.Enums;
+using EnergyTrade.Application.EnergyOffers.Cancel;
+using EnergyTrade.Application.EnergyOffers.Close;
 
 namespace EnergyTrade.Api.Controllers;
 
@@ -16,14 +18,22 @@ public class EnergyOffersController : ControllerBase
 
     private readonly GetEnergyOffersService _getEnergyOffersService;
 
+    private readonly CancelEnergyOfferService _cancelEnergyOfferService;
+
+    private readonly CloseEnergyOfferService _closeEnergyOfferService;
+
     public EnergyOffersController(
         CreateEnergyOfferService createEnergyOfferService,
         GetEnergyOfferByIdService getEnergyOfferByIdService,
-        GetEnergyOffersService getEnergyOffersService)
+        GetEnergyOffersService getEnergyOffersService,
+        CloseEnergyOfferService closeEnergyOfferService,
+        CancelEnergyOfferService cancelEnergyOfferService)
     {
         _createEnergyOfferService = createEnergyOfferService;
         _getEnergyOfferByIdService = getEnergyOfferByIdService;
         _getEnergyOffersService = getEnergyOffersService;
+        _closeEnergyOfferService = closeEnergyOfferService;
+        _cancelEnergyOfferService = cancelEnergyOfferService;
     }
 
     [HttpPost]
@@ -69,6 +79,40 @@ public class EnergyOffersController : ControllerBase
             cancellationToken);
 
         return Ok(result);
+    }
+
+    [HttpPatch("{id:guid}/close")]
+    public async Task<IActionResult> Close(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var success = await _closeEnergyOfferService.ExecuteAsync(
+            id,
+            cancellationToken);
+
+        if (!success)
+        {
+            return NotFound();
+        }
+
+        return NoContent();
+    }
+
+    [HttpPatch("{id:guid}/cancel")]
+    public async Task<IActionResult> Cancel(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var success = await _cancelEnergyOfferService.ExecuteAsync(
+            id,
+            cancellationToken);
+
+        if (!success)
+        {
+            return NotFound();
+        }
+
+        return NoContent();
     }
 
 }
