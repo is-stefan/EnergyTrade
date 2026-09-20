@@ -59,4 +59,11 @@ public sealed class EnergyOfferRepository : IEnergyOfferRepository
 
         return await query.ToListAsync(cancellationToken);
     }
+
+    public async Task SaveChangesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
 }

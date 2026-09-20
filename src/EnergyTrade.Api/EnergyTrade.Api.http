@@ -104,3 +104,29 @@ GET http://localhost:5087/api/energy-offers?energyType=Wind
 ###
 
 GET http://localhost:5087/api/energy-offers?status=Open&energyType=Solar
+
+###
+PATCH http://localhost:5087/api/energy-offers/96a4ad46-1143-43f8-8989-e53e45d5bbd0/close
+
+###
+PATCH http://localhost:5087/api/energy-offers/96a4ad46-1143-43f8-8989-e53e45d5bbd0/cancel
+
+###
+
+PATCH http://localhost:5087/api/energy-offers/7236fb16-9bef-4577-9928-5a4ae35059e7/cancel
+
+###
+
+PATCH http://localhost:5087/api/energy-offers/7236fb16-9bef-4577-9928-5a4ae35059e7/close
+
+###
+
+PATCH http://localhost:5087/api/energy-offers/f31ff4e7-e2c6-480b-8c51-a64dfe5b3931/cancel
+
+###
+
+GET http://localhost:5087/api/energy-offers/f31ff4e7-e2c6-480b-8c51-a64dfe5b3931
+
+###
+
+PATCH http://localhost:5087/api/energy-offers/f31ff4e7-e2c6-480b-8c51-a64dfe5b3931/close

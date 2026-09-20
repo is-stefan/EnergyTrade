@@ -2,6 +2,8 @@ using EnergyTrade.Application.EnergyOffers.Create;
 using Microsoft.Extensions.DependencyInjection;
 using EnergyTrade.Application.EnergyOffers.GetById;
 using EnergyTrade.Application.EnergyOffers.GetAll;
+using EnergyTrade.Application.EnergyOffers.Cancel;
+using EnergyTrade.Application.EnergyOffers.Close;
 
 namespace EnergyTrade.Application;
 
@@ -13,6 +15,8 @@ public static class DependencyInjection
         services.AddScoped<CreateEnergyOfferService>();
         services.AddScoped<GetEnergyOfferByIdService>();
         services.AddScoped<GetEnergyOffersService>();
+        services.AddScoped<CancelEnergyOfferService>();
+        services.AddScoped<CloseEnergyOfferService>();
 
         return services;
     }

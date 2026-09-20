@@ -1,46 +1,60 @@
 using EnergyTrade.Application.Abstractions.Persistence;
-using EnergyTrade.Application.EnergyOffers.GetById;
+using EnergyTrade.Application.EnergyOffers.Close;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
 
-namespace EnergyTrade.Application.Tests.EnergyOffers.GetById;
+namespace EnergyTrade.Application.Tests.EnergyOffers.Close;
 
-public class GetEnergyOfferByIdServiceTests
+public class CloseEnergyOfferServiceTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenOfferExists_ReturnsOffer()
+    public async Task ExecuteAsync_WhenOfferExists_ClosesOfferAndSavesChanges()
     {
         // Arrange
         var offer = CreateValidOffer();
         var repository = new FakeEnergyOfferRepository(offer);
-        var service = new GetEnergyOfferByIdService(repository);
+        var service = new CloseEnergyOfferService(repository);
 
         // Act
         var result = await service.ExecuteAsync(offer.Id);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(offer.Id, result.Id);
-        Assert.Equal(offer.SellerId, result.SellerId);
-        Assert.Equal(offer.EnergyType, result.EnergyType);
-        Assert.Equal(offer.QuantityMWh, result.QuantityMWh);
-        Assert.Equal(offer.PricePerMWh, result.PricePerMWh);
-        Assert.Equal(offer.Currency, result.Currency);
-        Assert.Equal(offer.Status, result.Status);
+        Assert.True(result);
+        Assert.Equal(OfferStatus.Closed, offer.Status);
+        Assert.NotNull(offer.UpdatedAt);
+        Assert.Equal(1, repository.SaveChangesCallCount);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenOfferDoesNotExist_ReturnsNull()
+    public async Task ExecuteAsync_WhenOfferDoesNotExist_ReturnsFalse()
     {
         // Arrange
         var repository = new FakeEnergyOfferRepository(null);
-        var service = new GetEnergyOfferByIdService(repository);
+        var service = new CloseEnergyOfferService(repository);
 
         // Act
         var result = await service.ExecuteAsync(Guid.NewGuid());
 
         // Assert
-        Assert.Null(result);
+        Assert.False(result);
+        Assert.Equal(0, repository.SaveChangesCallCount);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenOfferIsAlreadyClosed_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var offer = CreateValidOffer();
+        offer.Close();
+
+        var repository = new FakeEnergyOfferRepository(offer);
+        var service = new CloseEnergyOfferService(repository);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.ExecuteAsync(offer.Id));
+
+        Assert.Equal(0, repository.SaveChangesCallCount);
     }
 
     private static EnergyOffer CreateValidOffer()
@@ -62,6 +76,8 @@ public class GetEnergyOfferByIdServiceTests
         : IEnergyOfferRepository
     {
         private readonly EnergyOffer? _offer;
+
+        public int SaveChangesCallCount { get; private set; }
 
         public FakeEnergyOfferRepository(EnergyOffer? offer)
         {
@@ -99,8 +115,8 @@ public class GetEnergyOfferByIdServiceTests
         public Task SaveChangesAsync(
             CancellationToken cancellationToken = default)
         {
+            SaveChangesCallCount++;
             return Task.CompletedTask;
         }
-
     }
 }

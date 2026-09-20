@@ -102,5 +102,12 @@ public class GetEnergyOffersServiceTests
         {
             return Task.FromResult(_offers);
         }
+
+        public Task SaveChangesAsync(
+            CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+
     }
 }
