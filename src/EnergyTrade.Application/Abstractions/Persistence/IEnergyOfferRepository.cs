@@ -16,8 +16,16 @@ public interface IEnergyOfferRepository
     Task<IReadOnlyList<EnergyOffer>> GetAllAsync(
         OfferStatus? status = null,
         EnergyType? energyType = null,
+        int page = 1,
+        int pageSize = 10,
         CancellationToken cancellationToken = default);
 
+    Task<int> CountAsync(
+        OfferStatus? status = null,
+        EnergyType? energyType = null,
+        CancellationToken cancellationToken = default);
+
+
     Task SaveChangesAsync(
-    CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default);
 }
