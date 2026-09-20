@@ -5,6 +5,7 @@ using EnergyTrade.Application.EnergyOffers.GetAll;
 using EnergyTrade.Domain.Enums;
 using EnergyTrade.Application.EnergyOffers.Cancel;
 using EnergyTrade.Application.EnergyOffers.Close;
+using EnergyTrade.Application.EnergyOffers.Update;
 
 namespace EnergyTrade.Api.Controllers;
 
@@ -22,18 +23,22 @@ public class EnergyOffersController : ControllerBase
 
     private readonly CloseEnergyOfferService _closeEnergyOfferService;
 
+    private readonly UpdateEnergyOfferService _updateEnergyOfferService;
+
     public EnergyOffersController(
         CreateEnergyOfferService createEnergyOfferService,
         GetEnergyOfferByIdService getEnergyOfferByIdService,
         GetEnergyOffersService getEnergyOffersService,
         CloseEnergyOfferService closeEnergyOfferService,
-        CancelEnergyOfferService cancelEnergyOfferService)
+        CancelEnergyOfferService cancelEnergyOfferService,
+        UpdateEnergyOfferService updateEnergyOfferService)
     {
         _createEnergyOfferService = createEnergyOfferService;
         _getEnergyOfferByIdService = getEnergyOfferByIdService;
         _getEnergyOffersService = getEnergyOffersService;
         _closeEnergyOfferService = closeEnergyOfferService;
         _cancelEnergyOfferService = cancelEnergyOfferService;
+        _updateEnergyOfferService = updateEnergyOfferService;
     }
 
     [HttpPost]
@@ -105,6 +110,25 @@ public class EnergyOffersController : ControllerBase
     {
         var success = await _cancelEnergyOfferService.ExecuteAsync(
             id,
+            cancellationToken);
+
+        if (!success)
+        {
+            return NotFound();
+        }
+
+        return NoContent();
+    }
+
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update(
+        Guid id,
+        UpdateEnergyOfferRequest request,
+        CancellationToken cancellationToken)
+    {
+        var success = await _updateEnergyOfferService.ExecuteAsync(
+            id,
+            request,
             cancellationToken);
 
         if (!success)
