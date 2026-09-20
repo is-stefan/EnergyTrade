@@ -80,6 +80,22 @@ Content-Type: application/json
 
 ###
 
+POST http://localhost:5087/api/energy-offers
+Content-Type: application/json
+
+{
+  "sellerId": "33333333-3333-3333-3333-333333333333",
+  "energyType": 2,
+  "quantityMWh": 310,
+  "pricePerMWh": 92.50,
+  "currency": 1,
+  "deliveryStart": "2026-11-02T00:00:00+00:00",
+  "deliveryEnd": "2026-11-30T00:00:00+00:00"
+}
+
+
+###
+
 GET http://localhost:5087/api/energy-offers/96a4ad46-1143-43f8-8989-e53e45d5bbd0
 
 ###
@@ -130,3 +146,35 @@ GET http://localhost:5087/api/energy-offers/f31ff4e7-e2c6-480b-8c51-a64dfe5b3931
 ###
 
 PATCH http://localhost:5087/api/energy-offers/f31ff4e7-e2c6-480b-8c51-a64dfe5b3931/close
+
+###
+
+PUT http://localhost:5087/api/energy-offers/a3bba7ad-7fcb-46c3-bfeb-4eb7874925bb
+Content-Type: application/json
+
+{
+  "energyType": 2,
+  "quantityMWh": 300,
+  "pricePerMWh": 95,
+  "currency": 1,
+  "deliveryStart": "2026-12-01T00:00:00+00:00",
+  "deliveryEnd": "2026-12-31T00:00:00+00:00"
+}
+
+###
+
+GET http://localhost:5087/api/energy-offers/a3bba7ad-7fcb-46c3-bfeb-4eb7874925bb
+
+###
+
+PUT http://localhost:5087/api/energy-offers/a3bba7ad-7fcb-46c3-bfeb-4eb7874925bb
+Content-Type: application/json
+
+{
+  "energyType": 2,
+  "quantityMWh": 0,
+  "pricePerMWh": 95,
+  "currency": 1,
+  "deliveryStart": "2026-12-01T00:00:00+00:00",
+  "deliveryEnd": "2026-12-31T00:00:00+00:00"
+}
