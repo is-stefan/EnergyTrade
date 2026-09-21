@@ -253,3 +253,23 @@ GET http://localhost:5087/api/energy-offers/efaa5379-4bf8-44d0-b888-d2010693124a
 ###
 
 GET http://localhost:5087/api/energy-offers/11111111-4bf8-44d0-b888-d2010693124a
+
+###
+
+GET http://localhost:5087/api/trades?page=1&pageSize=10
+
+###
+
+GET http://localhost:5087/api/trades?sellerId=66666666-6666-6666-6666-666666666666
+
+###
+
+GET http://localhost:5087/api/trades?buyerId=44444444-4444-4444-4444-444444444444
+
+###
+
+GET http://localhost:5087/api/trades?energyType=1
+
+###
+
+GET http://localhost:5087/api/trades?energyType=1&page=1&pageSize=1

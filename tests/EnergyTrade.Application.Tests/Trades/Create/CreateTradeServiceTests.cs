@@ -230,5 +230,26 @@ public class CreateTradeServiceTests
             return Task.FromResult<Trade?>(null);
         }
 
+        public Task<IReadOnlyList<Trade>> GetAllAsync(
+            Guid? sellerId = null,
+            Guid? buyerId = null,
+            EnergyType? energyType = null,
+            int page = 1,
+            int pageSize = 10,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<IReadOnlyList<Trade>>(
+                Array.Empty<Trade>());
+        }
+
+        public Task<int> CountAsync(
+            Guid? sellerId = null,
+            Guid? buyerId = null,
+            EnergyType? energyType = null,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(0);
+        }
+
     }
 }
