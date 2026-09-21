@@ -222,5 +222,13 @@ public class CreateTradeServiceTests
 
             return Task.CompletedTask;
         }
+
+        public Task<Trade?> GetByIdAsync(
+            Guid id,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<Trade?>(null);
+        }
+
     }
 }
