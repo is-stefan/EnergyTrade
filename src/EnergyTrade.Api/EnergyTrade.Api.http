@@ -249,3 +249,7 @@ Content-Type: application/json
 ###
 
 GET http://localhost:5087/api/energy-offers/efaa5379-4bf8-44d0-b888-d2010693124a
+
+###
+
+GET http://localhost:5087/api/energy-offers/11111111-4bf8-44d0-b888-d2010693124a

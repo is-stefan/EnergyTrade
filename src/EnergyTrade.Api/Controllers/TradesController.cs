@@ -1,5 +1,6 @@
 using EnergyTrade.Application.Trades.Create;
 using Microsoft.AspNetCore.Mvc;
+using EnergyTrade.Application.Trades.GetById;
 
 namespace EnergyTrade.Api.Controllers;
 
@@ -9,10 +10,14 @@ public class TradesController : ControllerBase
 {
     private readonly CreateTradeService _createTradeService;
 
+    private readonly GetTradeByIdService _getTradeByIdService;
+
     public TradesController(
-        CreateTradeService createTradeService)
+        CreateTradeService createTradeService,
+        GetTradeByIdService getTradeByIdService)
     {
         _createTradeService = createTradeService;
+        _getTradeByIdService = getTradeByIdService;
     }
 
     [HttpPost]
@@ -33,4 +38,22 @@ public class TradesController : ControllerBase
             $"/api/trades/{result.Id}",
             result);
     }
+
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<GetTradeByIdResult>> GetById(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _getTradeByIdService.ExecuteAsync(
+            id,
+            cancellationToken);
+
+        if (result is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(result);
+    }
+
 }
