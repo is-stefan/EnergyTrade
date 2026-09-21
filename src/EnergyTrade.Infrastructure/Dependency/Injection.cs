@@ -21,6 +21,7 @@ public static class DependencyInjection
             options.UseOracle(connectionString));
 
         services.AddScoped<IEnergyOfferRepository, EnergyOfferRepository>();
+        services.AddScoped<ITradeRepository, TradeRepository>();
 
         return services;
     }

@@ -3,6 +3,7 @@ using System;
 using EnergyTrade.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Oracle.EntityFrameworkCore.Metadata;
 
@@ -11,9 +12,11 @@ using Oracle.EntityFrameworkCore.Metadata;
 namespace EnergyTrade.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(EnergyTradeDbContext))]
-    partial class EnergyTradeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260921135822_AddTrades")]
+    partial class AddTrades
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

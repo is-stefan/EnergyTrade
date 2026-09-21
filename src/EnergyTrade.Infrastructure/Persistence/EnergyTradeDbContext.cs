@@ -20,4 +20,7 @@ public class EnergyTradeDbContext : DbContext
         modelBuilder.ApplyConfigurationsFromAssembly(
             typeof(EnergyTradeDbContext).Assembly);
     }
+
+    public DbSet<Trade> Trades => Set<Trade>();
+
 }
