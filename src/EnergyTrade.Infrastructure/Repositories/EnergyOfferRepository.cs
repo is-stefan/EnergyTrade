@@ -96,4 +96,28 @@ public sealed class EnergyOfferRepository : IEnergyOfferRepository
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task<EnergyOffer?> FindMatchingAsync(
+        Guid buyerId,
+        EnergyType energyType,
+        decimal quantityMWh,
+        decimal maxPricePerMWh,
+        Currency currency,
+        DateTimeOffset deliveryStart,
+        DateTimeOffset deliveryEnd,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.EnergyOffers
+            .Where(offer =>
+                offer.Status == OfferStatus.Open &&
+                offer.SellerId != buyerId &&
+                offer.EnergyType == energyType &&
+                offer.Currency == currency &&
+                offer.QuantityMWh >= quantityMWh &&
+                offer.PricePerMWh <= maxPricePerMWh &&
+                offer.DeliveryStart <= deliveryStart &&
+                offer.DeliveryEnd >= deliveryEnd)
+            .OrderBy(offer => offer.PricePerMWh)
+            .ThenBy(offer => offer.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
 }

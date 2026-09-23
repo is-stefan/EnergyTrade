@@ -128,5 +128,19 @@ public class CancelEnergyOfferServiceTests
             SaveChangesCallCount++;
             return Task.CompletedTask;
         }
+
+        public Task<EnergyOffer?> FindMatchingAsync(
+            Guid buyerId,
+            EnergyType energyType,
+            decimal quantityMWh,
+            decimal maxPricePerMWh,
+            Currency currency,
+            DateTimeOffset deliveryStart,
+            DateTimeOffset deliveryEnd,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<EnergyOffer?>(null);
+        }
+
     }
 }

@@ -328,3 +328,7 @@ GET http://localhost:5087/api/orders?status=3
 ###
 
 PATCH http://localhost:5087/api/orders/77777777-c2b2-49dc-a7c3-e041499dc0ae/cancel
+
+###
+
+POST http://localhost:5087/api/orders/ORDER_ID/match

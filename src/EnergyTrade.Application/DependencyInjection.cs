@@ -12,6 +12,7 @@ using EnergyTrade.Application.Orders.Create;
 using EnergyTrade.Application.Orders.GetById;
 using EnergyTrade.Application.Orders.GetAll;
 using EnergyTrade.Application.Orders.Cancel;
+using EnergyTrade.Application.Orders.Match;
 
 namespace EnergyTrade.Application;
 
@@ -33,6 +34,7 @@ public static class DependencyInjection
         services.AddScoped<GetOrderByIdService>();
         services.AddScoped<GetOrdersService>();
         services.AddScoped<CancelOrderService>();
+        services.AddScoped<MatchOrderService>();
 
         return services;
     }
