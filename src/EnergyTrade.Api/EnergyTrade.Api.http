@@ -273,3 +273,58 @@ GET http://localhost:5087/api/trades?energyType=1
 ###
 
 GET http://localhost:5087/api/trades?energyType=1&page=1&pageSize=1
+
+###
+
+POST http://localhost:5087/api/orders
+Content-Type: application/json
+
+{
+  "buyerId": "77777777-7777-7777-7777-777777777777",
+  "energyType": 1,
+  "quantityMWh": 150,
+  "maxPricePerMWh": 90,
+  "currency": 1,
+  "deliveryStart": "2026-12-01T00:00:00+00:00",
+  "deliveryEnd": "2026-12-31T00:00:00+00:00"
+}
+
+###
+
+GET http://localhost:5087/api/orders/b674e142-c2b2-49dc-a7c3-e041499dc0ae
+
+###
+
+GET http://localhost:5087/api/orders/11111111-1111-1111-1111-111111111111
+
+###
+
+GET http://localhost:5087/api/orders?page=1&pageSize=10
+
+###
+
+GET http://localhost:5087/api/orders?buyerId=77777777-7777-7777-7777-777777777777
+
+###
+
+GET http://localhost:5087/api/orders?energyType=1
+
+###
+
+GET http://localhost:5087/api/orders?status=1
+
+###
+
+GET http://localhost:5087/api/orders?energyType=1&status=1&page=1&pageSize=5
+
+###
+
+PATCH http://localhost:5087/api/orders/b674e142-c2b2-49dc-a7c3-e041499dc0ae/cancel
+
+###
+
+GET http://localhost:5087/api/orders?status=3
+
+###
+
+PATCH http://localhost:5087/api/orders/77777777-c2b2-49dc-a7c3-e041499dc0ae/cancel
