@@ -4,6 +4,7 @@ using EnergyTrade.Application.Orders.GetById;
 using EnergyTrade.Application.Orders.GetAll;
 using EnergyTrade.Domain.Enums;
 using EnergyTrade.Application.Orders.Cancel;
+using EnergyTrade.Application.Orders.Match;
 
 namespace EnergyTrade.Api.Controllers;
 
@@ -19,16 +20,20 @@ public class OrdersController : ControllerBase
 
     private readonly CancelOrderService _cancelOrderService;
 
+    private readonly MatchOrderService _matchOrderService;
+
     public OrdersController(
         CreateOrderService createOrderService,
         GetOrderByIdService getOrderByIdService,
         GetOrdersService getOrdersService,
-        CancelOrderService cancelOrderService)
+        CancelOrderService cancelOrderService,
+        MatchOrderService matchOrderService)
     {
         _createOrderService = createOrderService;
         _getOrderByIdService = getOrderByIdService;
         _getOrdersService = getOrdersService;
         _cancelOrderService = cancelOrderService;
+        _matchOrderService = matchOrderService;
     }
 
     [HttpPost]
@@ -97,6 +102,23 @@ public class OrdersController : ControllerBase
         }
 
         return NoContent();
+    }
+
+    [HttpPost("{id:guid}/match")]
+    public async Task<ActionResult<MatchOrderResult>> Match(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _matchOrderService.ExecuteAsync(
+            id,
+            cancellationToken);
+
+        if (result is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(result);
     }
 
 }

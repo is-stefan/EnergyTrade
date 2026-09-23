@@ -28,4 +28,14 @@ public interface IEnergyOfferRepository
 
     Task SaveChangesAsync(
         CancellationToken cancellationToken = default);
+
+    Task<EnergyOffer?> FindMatchingAsync(
+        Guid buyerId,
+        EnergyType energyType,
+        decimal quantityMWh,
+        decimal maxPricePerMWh,
+        Currency currency,
+        DateTimeOffset deliveryStart,
+        DateTimeOffset deliveryEnd,
+        CancellationToken cancellationToken = default);
 }
