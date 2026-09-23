@@ -1,4 +1,5 @@
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Domain.Entities;
 using EnergyTrade.Infrastructure.Persistence;
 using EnergyTrade.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +23,7 @@ public static class DependencyInjection
 
         services.AddScoped<IEnergyOfferRepository, EnergyOfferRepository>();
         services.AddScoped<ITradeRepository, TradeRepository>();
+        services.AddScoped<IOrderRepository, OrderRepository>();
 
         return services;
     }

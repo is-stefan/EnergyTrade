@@ -23,4 +23,6 @@ public class EnergyTradeDbContext : DbContext
 
     public DbSet<Trade> Trades => Set<Trade>();
 
+    public DbSet<Order> Orders => Set<Order>();
+
 }
