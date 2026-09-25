@@ -13,6 +13,13 @@ using EnergyTrade.Application.Orders.GetById;
 using EnergyTrade.Application.Orders.GetAll;
 using EnergyTrade.Application.Orders.Cancel;
 using EnergyTrade.Application.Orders.Match;
+using EnergyTrade.Application.Positions.ApplyTrade;
+using EnergyTrade.Application.Positions.GetByPortfolio;
+using EnergyTrade.Application.Portfolios.Create;
+using EnergyTrade.Application.Portfolios.GetById;
+using EnergyTrade.Application.Portfolios.GetByUser;
+using EnergyTrade.Application.Portfolios.Rename;
+using EnergyTrade.Application.Portfolios.Close;
 
 namespace EnergyTrade.Application;
 
@@ -35,6 +42,13 @@ public static class DependencyInjection
         services.AddScoped<GetOrdersService>();
         services.AddScoped<CancelOrderService>();
         services.AddScoped<MatchOrderService>();
+        services.AddScoped<ApplyTradeToPositionsService>();
+        services.AddScoped<GetPositionsByPortfolioService>();
+        services.AddScoped<CreatePortfolioService>();
+        services.AddScoped<GetPortfolioByIdService>();
+        services.AddScoped<GetPortfoliosByUserService>();
+        services.AddScoped<RenamePortfolioService>();
+        services.AddScoped<ClosePortfolioService>();
 
         return services;
     }

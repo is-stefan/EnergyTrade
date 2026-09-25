@@ -56,6 +56,7 @@ public class GetOrderByIdServiceTests
 
         return new Order(
             Guid.NewGuid(),
+            Guid.NewGuid(),
             EnergyType.Solar,
             100m,
             85m,

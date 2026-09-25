@@ -97,6 +97,7 @@ public class GetEnergyOffersServiceTests
 
         return new EnergyOffer(
             Guid.NewGuid(),
+            Guid.NewGuid(),
             energyType,
             quantityMWh,
             80m,
@@ -111,6 +112,7 @@ public class GetEnergyOffersServiceTests
         var deliveryEnd = deliveryStart.AddDays(30);
 
         return new EnergyOffer(
+            Guid.NewGuid(),
             Guid.NewGuid(),
             EnergyType.Solar,
             quantityMWh,

@@ -20,6 +20,16 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasColumnName("BUYER_ID")
             .IsRequired();
 
+        builder.Property(x => x.PortfolioId)
+            .HasColumnName("PORTFOLIO_ID")
+            .HasColumnType("RAW(16)")
+            .IsRequired();
+
+        builder.HasOne<Portfolio>()
+            .WithMany()
+            .HasForeignKey(x => x.PortfolioId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.Property(order => order.EnergyType)
             .HasColumnName("ENERGY_TYPE")
             .HasConversion<int>()

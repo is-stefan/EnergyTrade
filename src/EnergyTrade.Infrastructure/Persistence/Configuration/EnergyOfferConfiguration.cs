@@ -21,6 +21,16 @@ public sealed class EnergyOfferConfiguration
             .HasColumnName("SELLER_ID")
             .IsRequired();
 
+        builder.Property(x => x.PortfolioId)
+            .HasColumnName("PORTFOLIO_ID")
+            .HasColumnType("RAW(16)")
+            .IsRequired();
+
+        builder.HasOne<Portfolio>()
+            .WithMany()
+            .HasForeignKey(x => x.PortfolioId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.Property(offer => offer.EnergyType)
             .HasColumnName("ENERGY_TYPE")
             .HasConversion<int>()

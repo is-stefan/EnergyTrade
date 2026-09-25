@@ -1,5 +1,6 @@
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Orders.Match;
+using EnergyTrade.Application.Positions.ApplyTrade;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
 
@@ -17,11 +18,16 @@ public class MatchOrderServiceTests
         var orderRepository = new FakeOrderRepository(order);
         var energyOfferRepository = new FakeEnergyOfferRepository(offer);
         var tradeRepository = new FakeTradeRepository();
+        var positionRepository = new FakePositionRepository();
+
+        var applyTradeToPositionsService =
+            new ApplyTradeToPositionsService(positionRepository);
 
         var service = new MatchOrderService(
             orderRepository,
             energyOfferRepository,
-            tradeRepository);
+            tradeRepository,
+            applyTradeToPositionsService);
 
         // Act
         var result = await service.ExecuteAsync(order.Id);
@@ -37,7 +43,17 @@ public class MatchOrderServiceTests
 
         Assert.NotNull(tradeRepository.AddedTrade);
         Assert.Equal(1, tradeRepository.AddCallCount);
-        Assert.Equal(1, orderRepository.SaveChangesCallCount);
+
+        Assert.Equal(2, positionRepository.Positions.Count);
+
+        var buyerPosition = positionRepository.Positions
+            .Single(x => x.PortfolioId == order.PortfolioId);
+
+        var sellerPosition = positionRepository.Positions
+            .Single(x => x.PortfolioId == offer.PortfolioId);
+
+        Assert.Equal(100m, buyerPosition.QuantityMWh);
+        Assert.Equal(-100m, sellerPosition.QuantityMWh);
     }
 
     [Fact]
@@ -47,11 +63,16 @@ public class MatchOrderServiceTests
         var orderRepository = new FakeOrderRepository(null);
         var energyOfferRepository = new FakeEnergyOfferRepository(null);
         var tradeRepository = new FakeTradeRepository();
+        var positionRepository = new FakePositionRepository();
+
+        var applyTradeToPositionsService =
+            new ApplyTradeToPositionsService(positionRepository);
 
         var service = new MatchOrderService(
             orderRepository,
             energyOfferRepository,
-            tradeRepository);
+            tradeRepository,
+            applyTradeToPositionsService);
 
         // Act
         var result = await service.ExecuteAsync(Guid.NewGuid());
@@ -59,7 +80,7 @@ public class MatchOrderServiceTests
         // Assert
         Assert.Null(result);
         Assert.Equal(0, tradeRepository.AddCallCount);
-        Assert.Equal(0, orderRepository.SaveChangesCallCount);
+        Assert.Empty(positionRepository.Positions);
     }
 
     [Fact]
@@ -71,11 +92,16 @@ public class MatchOrderServiceTests
         var orderRepository = new FakeOrderRepository(order);
         var energyOfferRepository = new FakeEnergyOfferRepository(null);
         var tradeRepository = new FakeTradeRepository();
+        var positionRepository = new FakePositionRepository();
+
+        var applyTradeToPositionsService =
+            new ApplyTradeToPositionsService(positionRepository);
 
         var service = new MatchOrderService(
             orderRepository,
             energyOfferRepository,
-            tradeRepository);
+            tradeRepository,
+            applyTradeToPositionsService);
 
         // Act
         var result = await service.ExecuteAsync(order.Id);
@@ -88,7 +114,7 @@ public class MatchOrderServiceTests
 
         Assert.Equal(OrderStatus.Open, order.Status);
         Assert.Equal(0, tradeRepository.AddCallCount);
-        Assert.Equal(0, orderRepository.SaveChangesCallCount);
+        Assert.Empty(positionRepository.Positions);
     }
 
     [Fact]
@@ -103,18 +129,23 @@ public class MatchOrderServiceTests
         var orderRepository = new FakeOrderRepository(order);
         var energyOfferRepository = new FakeEnergyOfferRepository(offer);
         var tradeRepository = new FakeTradeRepository();
+        var positionRepository = new FakePositionRepository();
+
+        var applyTradeToPositionsService =
+            new ApplyTradeToPositionsService(positionRepository);
 
         var service = new MatchOrderService(
             orderRepository,
             energyOfferRepository,
-            tradeRepository);
+            tradeRepository,
+            applyTradeToPositionsService);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => service.ExecuteAsync(order.Id));
 
         Assert.Equal(0, tradeRepository.AddCallCount);
-        Assert.Equal(0, orderRepository.SaveChangesCallCount);
+        Assert.Empty(positionRepository.Positions);
     }
 
     private static Order CreateOrder()
@@ -123,6 +154,7 @@ public class MatchOrderServiceTests
         var deliveryEnd = deliveryStart.AddDays(10);
 
         return new Order(
+            Guid.NewGuid(),
             Guid.NewGuid(),
             EnergyType.Solar,
             100m,
@@ -139,6 +171,7 @@ public class MatchOrderServiceTests
 
         return new EnergyOffer(
             Guid.NewGuid(),
+            Guid.NewGuid(),
             EnergyType.Solar,
             150m,
             80m,
@@ -151,8 +184,6 @@ public class MatchOrderServiceTests
         : IOrderRepository
     {
         private readonly Order? _order;
-
-        public int SaveChangesCallCount { get; private set; }
 
         public FakeOrderRepository(Order? order)
         {
@@ -202,7 +233,6 @@ public class MatchOrderServiceTests
         public Task SaveChangesAsync(
             CancellationToken cancellationToken = default)
         {
-            SaveChangesCallCount++;
             return Task.CompletedTask;
         }
     }
@@ -314,5 +344,50 @@ public class MatchOrderServiceTests
         {
             return Task.FromResult(0);
         }
+    }
+
+    private sealed class FakePositionRepository
+        : IPositionRepository
+    {
+        public List<Position> Positions { get; } = [];
+
+        public Task<Position?> GetByPortfolioAndEnergyTypeAsync(
+            Guid portfolioId,
+            EnergyType energyType,
+            CancellationToken cancellationToken = default)
+        {
+            var position = Positions.FirstOrDefault(x =>
+                x.PortfolioId == portfolioId &&
+                x.EnergyType == energyType);
+
+            return Task.FromResult(position);
+        }
+
+        public Task<IReadOnlyList<Position>> GetByPortfolioIdAsync(
+            Guid portfolioId,
+            CancellationToken cancellationToken = default)
+        {
+            IReadOnlyList<Position> positions = Positions
+                .Where(x => x.PortfolioId == portfolioId)
+                .ToList();
+
+            return Task.FromResult(positions);
+        }
+
+        public Task AddAsync(
+            Position position,
+            CancellationToken cancellationToken = default)
+        {
+            Positions.Add(position);
+
+            return Task.CompletedTask;
+        }
+
+        public Task SaveChangesAsync(
+            CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+
     }
 }

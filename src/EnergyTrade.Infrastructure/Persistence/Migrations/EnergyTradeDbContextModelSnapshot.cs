@@ -48,6 +48,10 @@ namespace EnergyTrade.Infrastructure.Persistence.Migrations
                         .HasColumnType("NUMBER(10)")
                         .HasColumnName("ENERGY_TYPE");
 
+                    b.Property<Guid>("PortfolioId")
+                        .HasColumnType("RAW(16)")
+                        .HasColumnName("PORTFOLIO_ID");
+
                     b.Property<decimal>("PricePerMWh")
                         .HasPrecision(18, 2)
                         .HasColumnType("DECIMAL(18,2)")
@@ -71,6 +75,8 @@ namespace EnergyTrade.Infrastructure.Persistence.Migrations
                         .HasColumnName("UPDATED_AT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PortfolioId");
 
                     b.ToTable("ENERGY_OFFERS", (string)null);
                 });
@@ -110,6 +116,10 @@ namespace EnergyTrade.Infrastructure.Persistence.Migrations
                         .HasColumnType("DECIMAL(18,2)")
                         .HasColumnName("MAX_PRICE_PER_MWH");
 
+                    b.Property<Guid>("PortfolioId")
+                        .HasColumnType("RAW(16)")
+                        .HasColumnName("PORTFOLIO_ID");
+
                     b.Property<decimal>("QuantityMWh")
                         .HasPrecision(18, 3)
                         .HasColumnType("DECIMAL(18,3)")
@@ -125,7 +135,85 @@ namespace EnergyTrade.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PortfolioId");
+
                     b.ToTable("ORDERS", (string)null);
+                });
+
+            modelBuilder.Entity("EnergyTrade.Domain.Entities.Portfolio", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("RAW(16)")
+                        .HasColumnName("ID");
+
+                    b.Property<int>("BaseCurrency")
+                        .HasColumnType("NUMBER(10)")
+                        .HasColumnName("BASE_CURRENCY");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE")
+                        .HasColumnName("CREATED_AT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("NVARCHAR2(100)")
+                        .HasColumnName("NAME");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("NUMBER(10)")
+                        .HasColumnName("STATUS");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE")
+                        .HasColumnName("UPDATED_AT");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("RAW(16)")
+                        .HasColumnName("USER_ID");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PORTFOLIOS", (string)null);
+                });
+
+            modelBuilder.Entity("EnergyTrade.Domain.Entities.Position", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("RAW(16)")
+                        .HasColumnName("ID");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE")
+                        .HasColumnName("CREATED_AT");
+
+                    b.Property<int>("EnergyType")
+                        .HasColumnType("NUMBER(10)")
+                        .HasColumnName("ENERGY_TYPE");
+
+                    b.Property<Guid>("PortfolioId")
+                        .HasColumnType("RAW(16)")
+                        .HasColumnName("PORTFOLIO_ID");
+
+                    b.Property<decimal>("QuantityMWh")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("DECIMAL(18,3)")
+                        .HasColumnName("QUANTITY_MWH");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE")
+                        .HasColumnName("UPDATED_AT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PortfolioId", "EnergyType")
+                        .IsUnique();
+
+                    b.ToTable("POSITIONS", (string)null);
                 });
 
             modelBuilder.Entity("EnergyTrade.Domain.Entities.Trade", b =>
@@ -171,6 +259,33 @@ namespace EnergyTrade.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("TRADES", (string)null);
+                });
+
+            modelBuilder.Entity("EnergyTrade.Domain.Entities.EnergyOffer", b =>
+                {
+                    b.HasOne("EnergyTrade.Domain.Entities.Portfolio", null)
+                        .WithMany()
+                        .HasForeignKey("PortfolioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("EnergyTrade.Domain.Entities.Order", b =>
+                {
+                    b.HasOne("EnergyTrade.Domain.Entities.Portfolio", null)
+                        .WithMany()
+                        .HasForeignKey("PortfolioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("EnergyTrade.Domain.Entities.Position", b =>
+                {
+                    b.HasOne("EnergyTrade.Domain.Entities.Portfolio", null)
+                        .WithMany()
+                        .HasForeignKey("PortfolioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

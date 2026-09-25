@@ -155,6 +155,7 @@ public class GetOrdersServiceTests
 
         return new Order(
             buyerId,
+            Guid.NewGuid(),
             energyType,
             quantityMWh,
             85m,
