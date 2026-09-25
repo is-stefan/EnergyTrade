@@ -331,4 +331,271 @@ PATCH http://localhost:5087/api/orders/77777777-c2b2-49dc-a7c3-e041499dc0ae/canc
 
 ###
 
-POST http://localhost:5087/api/orders/ORDER_ID/match
+POST http://localhost:5087/api/orders/b674e142-c2b2-49dc-a7c3-e041499dc0ae/match
+
+###
+
+POST http://localhost:5087/api/orders
+Content-Type: application/json
+
+{
+  "buyerId": "77777777-7777-7777-7777-777777777777",
+  "energyType": 1,
+  "quantityMWh": 100,
+  "maxPricePerMWh": 90,
+  "currency": 1,
+  "deliveryStart": "2026-12-10T00:00:00+00:00",
+  "deliveryEnd": "2026-12-20T00:00:00+00:00"
+}
+
+###
+
+POST http://localhost:5087/api/energy-offers
+Content-Type: application/json
+
+{
+  "sellerId": "66666666-6666-6666-6666-666666666666",
+  "energyType": 1,
+  "quantityMWh": 150,
+  "pricePerMWh": 80,
+  "currency": 1,
+  "deliveryStart": "2026-12-01T00:00:00+00:00",
+  "deliveryEnd": "2026-12-31T00:00:00+00:00"
+}
+
+###
+
+POST http://localhost:5087/api/orders/111dd360-b09c-49b7-8641-49ff6e30653d/match
+
+###
+
+GET http://localhost:5087/api/orders/111dd360-b09c-49b7-8641-49ff6e30653d
+
+###
+
+GET http://localhost:5087/api/energy-offers/c957ab11-bfd3-4193-8fbe-d4e6ba27b03c
+
+###
+
+GET http://localhost:5087/api/orders
+
+###
+
+POST http://localhost:5087/api/orders
+Content-Type: application/json
+
+{
+  "buyerId": "88888888-8888-8888-8888-888888888888",
+  "energyType": 1,
+  "quantityMWh": 123,
+  "maxPricePerMWh": 91,
+  "currency": 1,
+  "deliveryStart": "2026-12-10T00:00:00+00:00",
+  "deliveryEnd": "2026-12-20T00:00:00+00:00"
+}
+
+###
+
+POST http://localhost:5087/api/energy-offers
+Content-Type: application/json
+
+{
+  "sellerId": "99999999-9999-9999-9999-999999999999",
+  "energyType": 1,
+  "quantityMWh": 150,
+  "pricePerMWh": 80,
+  "currency": 1,
+  "deliveryStart": "2026-12-01T00:00:00+00:00",
+  "deliveryEnd": "2026-12-31T00:00:00+00:00"
+}
+
+###
+
+POST http://localhost:5087/api/orders/62b8ad07-495f-45c7-b09e-9b1cbe48c3c0/match
+
+###
+
+GET http://localhost:5087/api/orders/08d5c234-17b2-4477-b015-2d0bca34facd
+
+###
+
+GET http://localhost:5087/api/energy-offers/62b8ad07-495f-45c7-b09e-9b1cbe48c3c0
+
+###
+
+GET http://localhost:5087/api/orders
+
+###
+
+POST http://localhost:5087/api/orders/62b8ad07-495f-45c7-b09e-9b1cbe48c3c0/match
+
+###
+
+POST http://localhost:5087/api/orders
+Content-Type: application/json
+
+{
+  "buyerId": "77777777-7777-7777-7777-777777777777",
+  "energyType": 1,
+  "quantityMWh": 100,
+  "maxPricePerMWh": 90,
+  "currency": 1,
+  "deliveryStart": "2026-12-10T00:00:00+00:00",
+  "deliveryEnd": "2026-12-20T00:00:00+00:00"
+}
+
+###
+
+POST http://localhost:5087/api/energy-offers
+Content-Type: application/json
+
+{
+  "sellerId": "66666666-6666-6666-6666-666666666666",
+  "energyType": 1,
+  "quantityMWh": 150,
+  "pricePerMWh": 80,
+  "currency": 1,
+  "deliveryStart": "2026-12-01T00:00:00+00:00",
+  "deliveryEnd": "2026-12-31T00:00:00+00:00"
+}
+
+###
+
+POST http://localhost:5087/api/orders/4711aef5-3673-45a0-aa82-d5cc561e8ad4/match
+
+###
+
+GET http://localhost:5087/api/orders/4711aef5-3673-45a0-aa82-d5cc561e8ad4
+
+###
+
+GET http://localhost:5087/api/energy-offers/244869bb-fd1e-483e-8628-6501efefadb2
+
+###
+
+GET http://localhost:5087/api/trades/f0414023-5141-40e3-9853-a44d6be8e37a
+
+###
+
+POST http://localhost:5087/api/orders
+Content-Type: application/json
+
+{
+  "buyerId": "88888888-8888-8888-8888-888888888888",
+  "energyType": 2,
+  "quantityMWh": 50,
+  "maxPricePerMWh": 100,
+  "currency": 1,
+  "deliveryStart": "2027-01-10T00:00:00+00:00",
+  "deliveryEnd": "2027-01-20T00:00:00+00:00"
+}
+
+###
+
+POST http://localhost:5087/api/energy-offers
+Content-Type: application/json
+
+{
+  "sellerId": "99999999-9999-9999-9999-999999999999",
+  "energyType": 2,
+  "quantityMWh": 80,
+  "pricePerMWh": 90,
+  "currency": 1,
+  "deliveryStart": "2027-01-01T00:00:00+00:00",
+  "deliveryEnd": "2027-01-31T00:00:00+00:00"
+}
+
+###
+
+POST http://localhost:5087/api/orders/c50ae067-5a51-49bf-bd88-7837b212a640/match
+
+###
+
+GET http://localhost:5087/api/positions/user/88888888-8888-8888-8888-888888888888
+
+###
+
+GET http://localhost:5087/api/positions/user/99999999-9999-9999-9999-999999999999
+
+###
+
+POST http://localhost:5087/api/portfolios
+Content-Type: application/json
+
+{
+  "userId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+  "name": "Trading Portfolio",
+  "baseCurrency": 1
+}
+
+###
+
+GET http://localhost:5087/api/portfolios/b53b3e46-537d-4c96-8237-67abff0c379d
+
+###
+
+GET http://localhost:5087/api/portfolios/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee
+
+###
+
+GET http://localhost:5087/api/portfolios/user/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+
+###
+
+GET http://localhost:5087/api/portfolios/user/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb
+
+###
+
+PATCH http://localhost:5087/api/portfolios/b53b3e46-537d-4c96-8237-67abff0c379d/rename
+Content-Type: application/json
+
+{
+  "name": "Updated Trading Portfolio"
+}
+
+###
+
+GET http://localhost:5087/api/portfolios/b53b3e46-537d-4c96-8237-67abff0c379d
+
+###
+
+PATCH http://localhost:5087/api/portfolios/b53b3e46-537d-4c96-8237-67abff0c379d/close
+
+###
+
+GET http://localhost:5087/api/portfolios/b53b3e46-537d-4c96-8237-67abff0c379d
+
+###
+
+PATCH http://localhost:5087/api/portfolios/b53b3e46-537d-4c96-8237-67abff0c379d/close
+
+###
+
+POST http://localhost:5087/api/portfolios
+Content-Type: application/json
+
+{
+  "userId": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+  "name": "Active Portfolio",
+  "baseCurrency": 1
+}
+
+###
+
+POST http://localhost:5087/api/orders
+Content-Type: application/json
+
+{
+  "buyerId": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+  "portfolioId": "34c2323e-d54b-4630-b986-b48f73fe315c",
+  "energyType": 1,
+  "quantityMWh": 100,
+  "maxPricePerMWh": 90,
+  "currency": 1,
+  "deliveryStart": "2027-02-01T00:00:00+00:00",
+  "deliveryEnd": "2027-02-10T00:00:00+00:00"
+}
+
+###
+
+PATCH http://localhost:5087/api/portfolios/P34c2323e-d54b-4630-b986-b48f73fe315c/close

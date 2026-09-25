@@ -64,6 +64,7 @@ public class CancelEnergyOfferServiceTests
 
         return new EnergyOffer(
             Guid.NewGuid(),
+            Guid.NewGuid(),
             EnergyType.Wind,
             200m,
             90m,

@@ -25,4 +25,8 @@ public class EnergyTradeDbContext : DbContext
 
     public DbSet<Order> Orders => Set<Order>();
 
+    public DbSet<Position> Positions => Set<Position>();
+
+    public DbSet<Portfolio> Portfolios => Set<Portfolio>();
+
 }

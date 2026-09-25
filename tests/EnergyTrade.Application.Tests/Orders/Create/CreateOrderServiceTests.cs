@@ -12,12 +12,12 @@ public class CreateOrderServiceTests
     {
         // Arrange
         var repository = new FakeOrderRepository();
-        var service = new CreateOrderService(repository);
 
         var deliveryStart = DateTimeOffset.UtcNow.AddDays(1);
         var deliveryEnd = deliveryStart.AddDays(30);
 
         var request = new CreateOrderRequest(
+            Guid.NewGuid(),
             Guid.NewGuid(),
             EnergyType.Solar,
             100m,
@@ -25,6 +25,18 @@ public class CreateOrderServiceTests
             Currency.EUR,
             deliveryStart,
             deliveryEnd);
+
+        var portfolio = new Portfolio(
+            request.BuyerId,
+            "Test Portfolio",
+            request.Currency);
+
+        var portfolioRepository =
+            new FakePortfolioRepository(portfolio);
+
+        var service = new CreateOrderService(
+            repository,
+            portfolioRepository);
 
         // Act
         var result = await service.ExecuteAsync(request);
@@ -37,11 +49,29 @@ public class CreateOrderServiceTests
         Assert.NotNull(repository.AddedOrder);
         Assert.Equal(1, repository.AddCallCount);
 
-        Assert.Equal(request.BuyerId, repository.AddedOrder.BuyerId);
-        Assert.Equal(request.EnergyType, repository.AddedOrder.EnergyType);
-        Assert.Equal(request.QuantityMWh, repository.AddedOrder.QuantityMWh);
-        Assert.Equal(request.MaxPricePerMWh, repository.AddedOrder.MaxPricePerMWh);
-        Assert.Equal(request.Currency, repository.AddedOrder.Currency);
+        Assert.Equal(
+            request.BuyerId,
+            repository.AddedOrder.BuyerId);
+
+        Assert.Equal(
+            request.PortfolioId,
+            repository.AddedOrder.PortfolioId);
+
+        Assert.Equal(
+            request.EnergyType,
+            repository.AddedOrder.EnergyType);
+
+        Assert.Equal(
+            request.QuantityMWh,
+            repository.AddedOrder.QuantityMWh);
+
+        Assert.Equal(
+            request.MaxPricePerMWh,
+            repository.AddedOrder.MaxPricePerMWh);
+
+        Assert.Equal(
+            request.Currency,
+            repository.AddedOrder.Currency);
     }
 
     [Fact]
@@ -49,12 +79,12 @@ public class CreateOrderServiceTests
     {
         // Arrange
         var repository = new FakeOrderRepository();
-        var service = new CreateOrderService(repository);
 
         var deliveryStart = DateTimeOffset.UtcNow.AddDays(1);
         var deliveryEnd = deliveryStart.AddDays(30);
 
         var request = new CreateOrderRequest(
+            Guid.NewGuid(),
             Guid.NewGuid(),
             EnergyType.Solar,
             0m,
@@ -62,6 +92,18 @@ public class CreateOrderServiceTests
             Currency.EUR,
             deliveryStart,
             deliveryEnd);
+
+        var portfolio = new Portfolio(
+            request.BuyerId,
+            "Test Portfolio",
+            request.Currency);
+
+        var portfolioRepository =
+            new FakePortfolioRepository(portfolio);
+
+        var service = new CreateOrderService(
+            repository,
+            portfolioRepository);
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
@@ -75,12 +117,57 @@ public class CreateOrderServiceTests
     {
         // Arrange
         var repository = new FakeOrderRepository();
-        var service = new CreateOrderService(repository);
 
         var deliveryStart = DateTimeOffset.UtcNow.AddDays(10);
         var deliveryEnd = deliveryStart.AddDays(-1);
 
         var request = new CreateOrderRequest(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            EnergyType.Solar,
+            100m,
+            85m,
+            Currency.EUR,
+            deliveryStart,
+            deliveryEnd);
+
+        var portfolio = new Portfolio(
+            request.BuyerId,
+            "Test Portfolio",
+            request.Currency);
+
+        var portfolioRepository =
+            new FakePortfolioRepository(portfolio);
+
+        var service = new CreateOrderService(
+            repository,
+            portfolioRepository);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => service.ExecuteAsync(request));
+
+        Assert.Equal(0, repository.AddCallCount);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenPortfolioDoesNotExist_ThrowsArgumentException()
+    {
+        // Arrange
+        var repository = new FakeOrderRepository();
+
+        var portfolioRepository =
+            new FakePortfolioRepository(null);
+
+        var service = new CreateOrderService(
+            repository,
+            portfolioRepository);
+
+        var deliveryStart = DateTimeOffset.UtcNow.AddDays(1);
+        var deliveryEnd = deliveryStart.AddDays(30);
+
+        var request = new CreateOrderRequest(
+            Guid.NewGuid(),
             Guid.NewGuid(),
             EnergyType.Solar,
             100m,
@@ -91,6 +178,46 @@ public class CreateOrderServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(
+            () => service.ExecuteAsync(request));
+
+        Assert.Equal(0, repository.AddCallCount);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenPortfolioIsClosed_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var repository = new FakeOrderRepository();
+
+        var deliveryStart = DateTimeOffset.UtcNow.AddDays(1);
+        var deliveryEnd = deliveryStart.AddDays(30);
+
+        var request = new CreateOrderRequest(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            EnergyType.Solar,
+            100m,
+            85m,
+            Currency.EUR,
+            deliveryStart,
+            deliveryEnd);
+
+        var portfolio = new Portfolio(
+            request.BuyerId,
+            "Test Portfolio",
+            request.Currency);
+
+        portfolio.Close();
+
+        var portfolioRepository =
+            new FakePortfolioRepository(portfolio);
+
+        var service = new CreateOrderService(
+            repository,
+            portfolioRepository);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
             () => service.ExecuteAsync(request));
 
         Assert.Equal(0, repository.AddCallCount);
@@ -146,6 +273,45 @@ public class CreateOrderServiceTests
         {
             return Task.CompletedTask;
         }
+    }
 
+    private sealed class FakePortfolioRepository
+        : IPortfolioRepository
+    {
+        private readonly Portfolio? _portfolio;
+
+        public FakePortfolioRepository(
+            Portfolio? portfolio)
+        {
+            _portfolio = portfolio;
+        }
+
+        public Task AddAsync(
+            Portfolio portfolio,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task<Portfolio?> GetByIdAsync(
+            Guid id,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(_portfolio);
+        }
+
+        public Task<IReadOnlyList<Portfolio>> GetByUserIdAsync(
+            Guid userId,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<IReadOnlyList<Portfolio>>(
+                Array.Empty<Portfolio>());
+        }
+
+        public Task SaveChangesAsync(
+            CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
     }
 }

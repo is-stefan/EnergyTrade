@@ -140,6 +140,7 @@ public class CreateTradeServiceTests
 
         return new EnergyOffer(
             Guid.NewGuid(),
+            Guid.NewGuid(),
             EnergyType.Solar,
             100m,
             85m,

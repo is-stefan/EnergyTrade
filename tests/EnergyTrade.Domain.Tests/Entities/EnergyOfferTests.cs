@@ -6,216 +6,323 @@ namespace EnergyTrade.Domain.Tests.Entities;
 public class EnergyOfferTests
 {
     [Fact]
-    public void Constructor_WithValidData_CreatesOpenOffer()
+    public void Constructor_WithValidData_CreatesOpenEnergyOffer()
     {
         // Arrange
         var sellerId = Guid.NewGuid();
-        var deliveryStart = new DateTimeOffset(2026, 10, 1, 0, 0, 0, TimeSpan.Zero);
+        var portfolioId = Guid.NewGuid();
 
-        var deliveryEnd = new DateTimeOffset(2026, 10, 31, 0, 0, 0, TimeSpan.Zero);
+        var deliveryStart =
+            DateTimeOffset.UtcNow.AddDays(1);
+
+        var deliveryEnd =
+            deliveryStart.AddDays(10);
 
         // Act
         var offer = new EnergyOffer(
             sellerId,
+            portfolioId,
             EnergyType.Solar,
-            100m,
-            82.5m,
-            Currency.EUR,
-            deliveryStart,
-            deliveryEnd);
-        
-        // Assert
-        Assert.NotEqual(Guid.Empty, offer.Id);
-        Assert.Equal(sellerId, offer.SellerId);
-        Assert.Equal(EnergyType.Solar, offer.EnergyType);
-        Assert.Equal(100m, offer.QuantityMWh);
-        Assert.Equal(82.50m, offer.PricePerMWh);
-        Assert.Equal(Currency.EUR, offer.Currency);
-        Assert.Equal(deliveryStart, offer.DeliveryStart);
-        Assert.Equal(deliveryEnd, offer.DeliveryEnd);
-        Assert.Equal(OfferStatus.Open, offer.Status);
-
-        Assert.NotEqual(default, offer.CreatedAt);
-        Assert.Null(offer.UpdatedAt);
-
-    }
-
-    [Fact]
-    public void Constructor_WithZeroQuantity_ThrowsArgumentOutOfRangeException()
-    {
-        // Arrange
-        var sellerId = Guid.NewGuid();
-        var deliveryStart = DateTimeOffset.UtcNow.AddDays(1);
-        var deliveryEnd = deliveryStart.AddDays(30);
-
-        // Act
-        var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new EnergyOffer(
-                sellerId,
-                EnergyType.Wind,
-                0m,
-                80m,
-                Currency.EUR,
-                deliveryStart,
-                deliveryEnd));
-
-        // Assert
-        Assert.Equal("quantityMWh", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithZeroPrice_ThrowsArgumentOutOfRangeException()
-    {
-        // Arrange
-        var sellerId = Guid.NewGuid();
-        var deliveryStart = DateTimeOffset.UtcNow.AddDays(1);
-        var deliveryEnd = deliveryStart.AddDays(30);
-
-        // Act
-        var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new EnergyOffer(
-                sellerId,
-                EnergyType.Hydro,
-                100m,
-                0m,
-                Currency.EUR,
-                deliveryStart,
-                deliveryEnd));
-
-        // Assert
-        Assert.Equal("pricePerMWh", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithDeliveryEndBeforeStart_ThrowsArgumentException()
-    {
-        // Arrange
-        var sellerId = Guid.NewGuid();
-
-        var deliveryStart = new DateTimeOffset(
-            2026, 10, 31, 0, 0, 0, TimeSpan.Zero);
-
-        var deliveryEnd = new DateTimeOffset(
-            2026, 10, 1, 0, 0, 0, TimeSpan.Zero);
-
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() =>
-            new EnergyOffer(
-                sellerId,
-                EnergyType.Solar,
-                100m,
-                80m,
-                Currency.EUR,
-                deliveryStart,
-                deliveryEnd));
-    }
-
-    [Fact]
-    public void Update_WhenOfferIsOpen_UpdatesOfferData()
-    {
-        // Arrange
-        var sellerId = Guid.NewGuid();
-        var deliveryStart = DateTimeOffset.UtcNow.AddDays(1);
-        var deliveryEnd = deliveryStart.AddDays(30);
-
-        var offer = new EnergyOffer(
-            sellerId,
-            EnergyType.Solar,
-            100m,
+            150m,
             80m,
             Currency.EUR,
             deliveryStart,
             deliveryEnd);
 
-        var newDeliveryStart = deliveryStart.AddDays(5);
-        var newDeliveryEnd = deliveryEnd.AddDays(5);
-
-        // Act
-        offer.Update(
-            EnergyType.Wind,
-            150m,
-            90m,
-            Currency.USD,
-            newDeliveryStart,
-            newDeliveryEnd);
-
         // Assert
-        Assert.Equal(EnergyType.Wind, offer.EnergyType);
-        Assert.Equal(150m, offer.QuantityMWh);
-        Assert.Equal(90m, offer.PricePerMWh);
-        Assert.Equal(Currency.USD, offer.Currency);
-        Assert.Equal(newDeliveryStart, offer.DeliveryStart);
-        Assert.Equal(newDeliveryEnd, offer.DeliveryEnd);
-        Assert.NotNull(offer.UpdatedAt);
+        Assert.NotEqual(
+            Guid.Empty,
+            offer.Id);
+
+        Assert.Equal(
+            sellerId,
+            offer.SellerId);
+
+        Assert.Equal(
+            portfolioId,
+            offer.PortfolioId);
+
+        Assert.Equal(
+            EnergyType.Solar,
+            offer.EnergyType);
+
+        Assert.Equal(
+            150m,
+            offer.QuantityMWh);
+
+        Assert.Equal(
+            80m,
+            offer.PricePerMWh);
+
+        Assert.Equal(
+            Currency.EUR,
+            offer.Currency);
+
+        Assert.Equal(
+            deliveryStart,
+            offer.DeliveryStart);
+
+        Assert.Equal(
+            deliveryEnd,
+            offer.DeliveryEnd);
+
+        Assert.Equal(
+            OfferStatus.Open,
+            offer.Status);
+
+        Assert.NotEqual(
+            default,
+            offer.CreatedAt);
+
+        Assert.Null(offer.UpdatedAt);
     }
 
     [Fact]
-    public void Close_WhenOfferIsOpen_ChangesStatusToClosed()
+    public void Constructor_WithEmptySellerId_ThrowsArgumentException()
+    {
+        var deliveryStart =
+            DateTimeOffset.UtcNow.AddDays(1);
+
+        var deliveryEnd =
+            deliveryStart.AddDays(10);
+
+        Assert.Throws<ArgumentException>(() =>
+            new EnergyOffer(
+                Guid.Empty,
+                Guid.NewGuid(),
+                EnergyType.Solar,
+                150m,
+                80m,
+                Currency.EUR,
+                deliveryStart,
+                deliveryEnd));
+    }
+
+    [Fact]
+    public void Constructor_WithEmptyPortfolioId_ThrowsArgumentException()
+    {
+        var deliveryStart =
+            DateTimeOffset.UtcNow.AddDays(1);
+
+        var deliveryEnd =
+            deliveryStart.AddDays(10);
+
+        Assert.Throws<ArgumentException>(() =>
+            new EnergyOffer(
+                Guid.NewGuid(),
+                Guid.Empty,
+                EnergyType.Solar,
+                150m,
+                80m,
+                Currency.EUR,
+                deliveryStart,
+                deliveryEnd));
+    }
+
+    [Fact]
+    public void Constructor_WithZeroQuantity_ThrowsArgumentOutOfRangeException()
+    {
+        var deliveryStart =
+            DateTimeOffset.UtcNow.AddDays(1);
+
+        var deliveryEnd =
+            deliveryStart.AddDays(10);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new EnergyOffer(
+                Guid.NewGuid(),
+                Guid.NewGuid(),
+                EnergyType.Solar,
+                0m,
+                80m,
+                Currency.EUR,
+                deliveryStart,
+                deliveryEnd));
+    }
+
+    [Fact]
+    public void Constructor_WithNegativeQuantity_ThrowsArgumentOutOfRangeException()
+    {
+        var deliveryStart =
+            DateTimeOffset.UtcNow.AddDays(1);
+
+        var deliveryEnd =
+            deliveryStart.AddDays(10);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new EnergyOffer(
+                Guid.NewGuid(),
+                Guid.NewGuid(),
+                EnergyType.Solar,
+                -10m,
+                80m,
+                Currency.EUR,
+                deliveryStart,
+                deliveryEnd));
+    }
+
+    [Fact]
+    public void Constructor_WithZeroPrice_ThrowsArgumentOutOfRangeException()
+    {
+        var deliveryStart =
+            DateTimeOffset.UtcNow.AddDays(1);
+
+        var deliveryEnd =
+            deliveryStart.AddDays(10);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new EnergyOffer(
+                Guid.NewGuid(),
+                Guid.NewGuid(),
+                EnergyType.Solar,
+                150m,
+                0m,
+                Currency.EUR,
+                deliveryStart,
+                deliveryEnd));
+    }
+
+    [Fact]
+    public void Constructor_WithNegativePrice_ThrowsArgumentOutOfRangeException()
+    {
+        var deliveryStart =
+            DateTimeOffset.UtcNow.AddDays(1);
+
+        var deliveryEnd =
+            deliveryStart.AddDays(10);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new EnergyOffer(
+                Guid.NewGuid(),
+                Guid.NewGuid(),
+                EnergyType.Solar,
+                150m,
+                -10m,
+                Currency.EUR,
+                deliveryStart,
+                deliveryEnd));
+    }
+
+    [Fact]
+    public void Constructor_WithInvalidDeliveryRange_ThrowsArgumentException()
+    {
+        var deliveryStart =
+            DateTimeOffset.UtcNow.AddDays(10);
+
+        var deliveryEnd =
+            deliveryStart.AddDays(-1);
+
+        Assert.Throws<ArgumentException>(() =>
+            new EnergyOffer(
+                Guid.NewGuid(),
+                Guid.NewGuid(),
+                EnergyType.Solar,
+                150m,
+                80m,
+                Currency.EUR,
+                deliveryStart,
+                deliveryEnd));
+    }
+
+    [Fact]
+    public void Close_WhenOfferIsOpen_SetsStatusToClosed()
     {
         // Arrange
-        var offer = CreateValidOffer();
+        var offer = CreateOffer();
 
         // Act
         offer.Close();
 
         // Assert
-        Assert.Equal(OfferStatus.Closed, offer.Status);
+        Assert.Equal(
+            OfferStatus.Closed,
+            offer.Status);
+
         Assert.NotNull(offer.UpdatedAt);
     }
 
     [Fact]
-    public void Cancel_WhenOfferIsOpen_ChangesStatusToCancelled()
+    public void Cancel_WhenOfferIsOpen_SetsStatusToCancelled()
     {
         // Arrange
-        var offer = CreateValidOffer();
+        var offer = CreateOffer();
 
         // Act
         offer.Cancel();
 
         // Assert
-        Assert.Equal(OfferStatus.Cancelled, offer.Status);
+        Assert.Equal(
+            OfferStatus.Cancelled,
+            offer.Status);
+
         Assert.NotNull(offer.UpdatedAt);
     }
 
     [Fact]
-    public void Update_WhenOfferIsClosed_ThrowsInvalidOperationException()
+    public void Close_WhenOfferIsAlreadyClosed_ThrowsInvalidOperationException()
     {
         // Arrange
-        var offer = CreateValidOffer();
+        var offer = CreateOffer();
+
         offer.Close();
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() =>
-            offer.Update(
-                EnergyType.Wind,
-                150m,
-                90m,
-                Currency.USD,
-                DateTimeOffset.UtcNow.AddDays(5),
-                DateTimeOffset.UtcNow.AddDays(30)));
+        Assert.Throws<InvalidOperationException>(
+            () => offer.Close());
+    }
+
+    [Fact]
+    public void Cancel_WhenOfferIsAlreadyCancelled_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var offer = CreateOffer();
+
+        offer.Cancel();
+
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(
+            () => offer.Cancel());
     }
 
     [Fact]
     public void Cancel_WhenOfferIsClosed_ThrowsInvalidOperationException()
     {
         // Arrange
-        var offer = CreateValidOffer();
+        var offer = CreateOffer();
+
         offer.Close();
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() =>
-            offer.Cancel());
+        Assert.Throws<InvalidOperationException>(
+            () => offer.Cancel());
     }
 
-        private static EnergyOffer CreateValidOffer()
+    [Fact]
+    public void Close_WhenOfferIsCancelled_ThrowsInvalidOperationException()
     {
-        var deliveryStart = DateTimeOffset.UtcNow.AddDays(1);
-        var deliveryEnd = deliveryStart.AddDays(30);
+        // Arrange
+        var offer = CreateOffer();
+
+        offer.Cancel();
+
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(
+            () => offer.Close());
+    }
+
+    private static EnergyOffer CreateOffer()
+    {
+        var deliveryStart =
+            DateTimeOffset.UtcNow.AddDays(1);
+
+        var deliveryEnd =
+            deliveryStart.AddDays(10);
 
         return new EnergyOffer(
             Guid.NewGuid(),
+            Guid.NewGuid(),
             EnergyType.Solar,
-            100m,
+            150m,
             80m,
             Currency.EUR,
             deliveryStart,

@@ -26,12 +26,15 @@ public class Order
 
     public DateTimeOffset? UpdatedAt { get; private set; }
 
+    public Guid PortfolioId { get; private set; }
+
     private Order()
     {
     }
 
     public Order(
         Guid buyerId,
+        Guid portfolioId,
         EnergyType energyType,
         decimal quantityMWh,
         decimal maxPricePerMWh,
@@ -44,6 +47,13 @@ public class Order
             throw new ArgumentException(
                 "Buyer id cannot be empty.",
                 nameof(buyerId));
+        }
+
+        if(portfolioId == Guid.Empty)
+        {
+            throw new ArgumentException(
+                "Portfolio id cannot be empty.",
+                nameof(portfolioId));
         }
 
         if (quantityMWh <= 0)
@@ -68,6 +78,7 @@ public class Order
 
         Id = Guid.NewGuid();
         BuyerId = buyerId;
+        PortfolioId = portfolioId;
         EnergyType = energyType;
         QuantityMWh = quantityMWh;
         MaxPricePerMWh = maxPricePerMWh;

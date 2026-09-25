@@ -50,6 +50,7 @@ public class GetEnergyOfferByIdServiceTests
 
         return new EnergyOffer(
             Guid.NewGuid(),
+            Guid.NewGuid(),
             EnergyType.Solar,
             100m,
             80m,

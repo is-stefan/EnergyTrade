@@ -1,4 +1,5 @@
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Positions.ApplyTrade;
 using EnergyTrade.Domain.Entities;
 
 namespace EnergyTrade.Application.Orders.Match;
@@ -9,14 +10,18 @@ public sealed class MatchOrderService
     private readonly IEnergyOfferRepository _energyOfferRepository;
     private readonly ITradeRepository _tradeRepository;
 
+    private readonly ApplyTradeToPositionsService _applyTradeToPositionsService;
+
     public MatchOrderService(
         IOrderRepository orderRepository,
         IEnergyOfferRepository energyOfferRepository,
-        ITradeRepository tradeRepository)
+        ITradeRepository tradeRepository,
+        ApplyTradeToPositionsService applyTradeToPositionsService)
     {
         _orderRepository = orderRepository;
         _energyOfferRepository = energyOfferRepository;
         _tradeRepository = tradeRepository;
+        _applyTradeToPositionsService = applyTradeToPositionsService;
     }
 
     public async Task<MatchOrderResult?> ExecuteAsync(
@@ -64,6 +69,12 @@ public sealed class MatchOrderService
 
         await _tradeRepository.AddAsync(
             trade,
+            cancellationToken);
+        
+        await _applyTradeToPositionsService.ExecuteAsync(
+            trade,
+            order.PortfolioId,
+            offer.PortfolioId,
             cancellationToken);
 
         await _orderRepository.SaveChangesAsync(

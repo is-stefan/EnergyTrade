@@ -8,6 +8,8 @@ namespace EnergyTrade.Domain.Entities
 
         public Guid SellerId { get; private set; }
 
+        public Guid PortfolioId { get; private set; }
+
         public EnergyType EnergyType { get; private set; }
 
         public decimal QuantityMWh { get; private set; }
@@ -33,6 +35,7 @@ namespace EnergyTrade.Domain.Entities
 
         public EnergyOffer(
         Guid sellerId,
+        Guid portfolioId,
         EnergyType energyType,
         decimal quantityMWh,
         decimal pricePerMWh,
@@ -44,6 +47,14 @@ namespace EnergyTrade.Domain.Entities
             if(sellerId == Guid.Empty)
             {
                 throw new ArgumentException("SellerId cannot be empty.", nameof(sellerId));
+            }
+
+            if(portfolioId == Guid.Empty)
+            {
+                throw new ArgumentException(
+                    "Portfolio id cannot be empty.",
+                    nameof(portfolioId));
+                
             }
 
             if(quantityMWh <= 0)
@@ -71,6 +82,7 @@ namespace EnergyTrade.Domain.Entities
 
             Id = Guid.NewGuid();
             SellerId = sellerId;
+            PortfolioId = portfolioId;
             EnergyType = energyType;
             QuantityMWh = quantityMWh;
             PricePerMWh = pricePerMWh;
