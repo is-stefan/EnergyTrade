@@ -70,5 +70,10 @@ public sealed class EnergyOfferConfiguration
 
         builder.Property(offer => offer.UpdatedAt)
             .HasColumnName("UPDATED_AT");
+
+        builder.Property(x => x.Version)
+            .HasColumnName("VERSION")
+            .IsRequired()
+            .IsConcurrencyToken();
     }
 }
