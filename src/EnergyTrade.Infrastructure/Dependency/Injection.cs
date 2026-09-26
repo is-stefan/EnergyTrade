@@ -3,6 +3,7 @@ using EnergyTrade.Domain.Entities;
 using EnergyTrade.Infrastructure.Persistence;
 using EnergyTrade.Infrastructure.Persistence.Repositories;
 using EnergyTrade.Infrastructure.Repositories;
+using EnergyTrade.Infrastructure.Persistence.Transactions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IPositionRepository, PositionRepository>();
         services.AddScoped<IPortfolioRepository, PortfolioRepository>();
+        services.AddScoped<ITransactionManager, EfTransactionManager>();
 
         return services;
     }

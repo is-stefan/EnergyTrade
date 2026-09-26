@@ -28,6 +28,8 @@ namespace EnergyTrade.Domain.Entities
 
         public DateTimeOffset? UpdatedAt { get; private set; }
 
+        public int Version {get; private set; }
+
         private EnergyOffer()
         {
             
@@ -92,6 +94,8 @@ namespace EnergyTrade.Domain.Entities
 
             Status = OfferStatus.Open;
             CreatedAt = DateTimeOffset.UtcNow;
+
+            Version = 1;
         }
 
         public void Update(
@@ -144,6 +148,7 @@ namespace EnergyTrade.Domain.Entities
 
             Status = OfferStatus.Closed;
             UpdatedAt = DateTimeOffset.UtcNow;
+            Version++;
         }
     
         public void Cancel()

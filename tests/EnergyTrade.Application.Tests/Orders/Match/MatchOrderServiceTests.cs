@@ -3,6 +3,7 @@ using EnergyTrade.Application.Orders.Match;
 using EnergyTrade.Application.Positions.ApplyTrade;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
+using EnergyTrade.Application.Common.Exceptions;
 
 namespace EnergyTrade.Application.Tests.Orders.Match;
 
@@ -23,11 +24,14 @@ public class MatchOrderServiceTests
         var applyTradeToPositionsService =
             new ApplyTradeToPositionsService(positionRepository);
 
+        var transactionManager = new FakeTransactionManager();
+
         var service = new MatchOrderService(
             orderRepository,
             energyOfferRepository,
             tradeRepository,
-            applyTradeToPositionsService);
+            applyTradeToPositionsService,
+            transactionManager);
 
         // Act
         var result = await service.ExecuteAsync(order.Id);
@@ -68,11 +72,14 @@ public class MatchOrderServiceTests
         var applyTradeToPositionsService =
             new ApplyTradeToPositionsService(positionRepository);
 
+        var transactionManager = new FakeTransactionManager();
+
         var service = new MatchOrderService(
             orderRepository,
             energyOfferRepository,
             tradeRepository,
-            applyTradeToPositionsService);
+            applyTradeToPositionsService,
+            transactionManager);
 
         // Act
         var result = await service.ExecuteAsync(Guid.NewGuid());
@@ -97,11 +104,14 @@ public class MatchOrderServiceTests
         var applyTradeToPositionsService =
             new ApplyTradeToPositionsService(positionRepository);
 
+        var transactionManager = new FakeTransactionManager();
+
         var service = new MatchOrderService(
             orderRepository,
             energyOfferRepository,
             tradeRepository,
-            applyTradeToPositionsService);
+            applyTradeToPositionsService,
+            transactionManager);
 
         // Act
         var result = await service.ExecuteAsync(order.Id);
@@ -134,11 +144,14 @@ public class MatchOrderServiceTests
         var applyTradeToPositionsService =
             new ApplyTradeToPositionsService(positionRepository);
 
+        var transactionManager = new FakeTransactionManager();
+
         var service = new MatchOrderService(
             orderRepository,
             energyOfferRepository,
             tradeRepository,
-            applyTradeToPositionsService);
+            applyTradeToPositionsService,
+            transactionManager);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -146,6 +159,7 @@ public class MatchOrderServiceTests
 
         Assert.Equal(0, tradeRepository.AddCallCount);
         Assert.Empty(positionRepository.Positions);
+        Assert.Equal(1, transactionManager.ExecuteCallCount);
     }
 
     private static Order CreateOrder()
@@ -390,4 +404,63 @@ public class MatchOrderServiceTests
         }
 
     }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenConcurrencyConflictOccurs_ReturnsNotMatched()
+    {
+        // Arrange
+        var orderRepository = new FakeOrderRepository(null);
+        var energyOfferRepository = new FakeEnergyOfferRepository(null);
+        var tradeRepository = new FakeTradeRepository();
+        var positionRepository = new FakePositionRepository();
+
+        var applyTradeToPositionsService =
+            new ApplyTradeToPositionsService(positionRepository);
+
+        var transactionManager =
+            new ThrowingTransactionManager();
+
+        var service = new MatchOrderService(
+            orderRepository,
+            energyOfferRepository,
+            tradeRepository,
+            applyTradeToPositionsService,
+            transactionManager);
+
+        // Act
+        var result = await service.ExecuteAsync(Guid.NewGuid());
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Matched);
+        Assert.Null(result.TradeId);
+        Assert.Null(result.EnergyOfferId);
+    }
+    private sealed class FakeTransactionManager
+        : ITransactionManager
+    {
+        public int ExecuteCallCount { get; private set; }
+
+        public async Task ExecuteAsync(
+            Func<CancellationToken, Task> operation,
+            CancellationToken cancellationToken = default)
+        {
+            ExecuteCallCount++;
+
+            await operation(cancellationToken);
+        }
+    }
+
+    private sealed class ThrowingTransactionManager
+        : ITransactionManager
+    {
+        public Task ExecuteAsync(
+            Func<CancellationToken, Task> operation,
+            CancellationToken cancellationToken = default)
+        {
+            throw new ConcurrencyConflictException(
+                "Simulated concurrency conflict.");
+        }
+    }
+
 }
