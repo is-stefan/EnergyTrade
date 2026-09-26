@@ -29,4 +29,7 @@ public class EnergyTradeDbContext : DbContext
 
     public DbSet<Portfolio> Portfolios => Set<Portfolio>();
 
+    public DbSet<IdempotencyRecord> IdempotencyRecords =>
+        Set<IdempotencyRecord>();
+
 }

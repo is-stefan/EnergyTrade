@@ -599,3 +599,31 @@ Content-Type: application/json
 ###
 
 PATCH http://localhost:5087/api/portfolios/P34c2323e-d54b-4630-b986-b48f73fe315c/close
+
+###
+
+POST http://localhost:5087/api/portfolios
+Content-Type: application/json
+
+{
+  "userId": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+  "name": "Idempotency Test Portfolio",
+  "baseCurrency": 1
+}
+
+###
+
+POST http://localhost:5087/api/orders
+Content-Type: application/json
+Idempotency-Key: order-test-001
+
+{
+  "buyerId": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+  "portfolioId": "31e0b7b9-fbee-4717-a79c-c243a289a41a",
+  "energyType": 1,
+  "quantityMWh": 100,
+  "maxPricePerMWh": 90,
+  "currency": 1,
+  "deliveryStart": "2027-03-01T00:00:00+00:00",
+  "deliveryEnd": "2027-03-10T00:00:00+00:00"
+}

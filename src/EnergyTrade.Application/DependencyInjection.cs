@@ -20,6 +20,7 @@ using EnergyTrade.Application.Portfolios.GetById;
 using EnergyTrade.Application.Portfolios.GetByUser;
 using EnergyTrade.Application.Portfolios.Rename;
 using EnergyTrade.Application.Portfolios.Close;
+using EnergyTrade.Application.Idempotency;
 
 namespace EnergyTrade.Application;
 
@@ -49,6 +50,8 @@ public static class DependencyInjection
         services.AddScoped<GetPortfoliosByUserService>();
         services.AddScoped<RenamePortfolioService>();
         services.AddScoped<ClosePortfolioService>();
+        services.AddScoped<IdempotencyService>();
+        services.AddScoped<IdempotentCreateOrderService>();
 
         return services;
     }
