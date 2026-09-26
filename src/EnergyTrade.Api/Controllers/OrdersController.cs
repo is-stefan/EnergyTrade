@@ -5,6 +5,7 @@ using EnergyTrade.Application.Orders.GetAll;
 using EnergyTrade.Domain.Enums;
 using EnergyTrade.Application.Orders.Cancel;
 using EnergyTrade.Application.Orders.Match;
+using EnergyTrade.Application.Idempotency;
 
 namespace EnergyTrade.Api.Controllers;
 
@@ -22,32 +23,22 @@ public class OrdersController : ControllerBase
 
     private readonly MatchOrderService _matchOrderService;
 
+    private readonly IdempotentCreateOrderService _idempotentCreateOrderService;
+
     public OrdersController(
         CreateOrderService createOrderService,
         GetOrderByIdService getOrderByIdService,
         GetOrdersService getOrdersService,
         CancelOrderService cancelOrderService,
-        MatchOrderService matchOrderService)
+        MatchOrderService matchOrderService,
+        IdempotentCreateOrderService idempotentCreateOrderService)
     {
         _createOrderService = createOrderService;
         _getOrderByIdService = getOrderByIdService;
         _getOrdersService = getOrdersService;
         _cancelOrderService = cancelOrderService;
         _matchOrderService = matchOrderService;
-    }
-
-    [HttpPost]
-    public async Task<ActionResult<CreateOrderResult>> Create(
-        CreateOrderRequest request,
-        CancellationToken cancellationToken)
-    {
-        var result = await _createOrderService.ExecuteAsync(
-            request,
-            cancellationToken);
-
-        return Created(
-            $"/api/orders/{result.Id}",
-            result);
+        _idempotentCreateOrderService = idempotentCreateOrderService;
     }
 
     [HttpGet("{id:guid}")]
@@ -119,6 +110,34 @@ public class OrdersController : ControllerBase
         }
 
         return Ok(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create(
+        CreateOrderRequest request,
+        [FromHeader(Name = "Idempotency-Key")] string? idempotencyKey,
+        CancellationToken cancellationToken)
+    {
+        CreateOrderResult result;
+
+        if (!string.IsNullOrWhiteSpace(idempotencyKey))
+        {
+            result = await _idempotentCreateOrderService.ExecuteAsync(
+                idempotencyKey,
+                request,
+                cancellationToken);
+        }
+        else
+        {
+            result = await _createOrderService.ExecuteAsync(
+                request,
+                cancellationToken);
+        }
+
+        return CreatedAtAction(
+            nameof(GetById),
+            new { id = result.Id },
+            result);
     }
 
 }
