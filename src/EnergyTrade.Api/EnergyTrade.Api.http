@@ -627,3 +627,20 @@ Idempotency-Key: order-test-001
   "deliveryStart": "2027-03-01T00:00:00+00:00",
   "deliveryEnd": "2027-03-10T00:00:00+00:00"
 }
+
+###
+
+POST http://localhost:5087/api/energy-offers
+Content-Type: application/json
+Idempotency-Key: offer-test-001
+
+{
+  "sellerId": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+  "portfolioId": "31e0b7b9-fbee-4717-a79c-c243a289a41a",
+  "energyType": 1,
+  "quantityMWh": 150,
+  "pricePerMWh": 80,
+  "currency": 1,
+  "deliveryStart": "2027-04-01T00:00:00+00:00",
+  "deliveryEnd": "2027-04-30T00:00:00+00:00"
+}
