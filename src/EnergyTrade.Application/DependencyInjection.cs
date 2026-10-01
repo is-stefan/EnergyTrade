@@ -52,6 +52,7 @@ public static class DependencyInjection
         services.AddScoped<ClosePortfolioService>();
         services.AddScoped<IdempotencyService>();
         services.AddScoped<IdempotentCreateOrderService>();
+        services.AddScoped<IdempotentCreateEnergyOfferService>();
 
         return services;
     }

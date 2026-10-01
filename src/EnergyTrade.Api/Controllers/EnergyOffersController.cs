@@ -25,13 +25,16 @@ public class EnergyOffersController : ControllerBase
 
     private readonly UpdateEnergyOfferService _updateEnergyOfferService;
 
+    private readonly IdempotentCreateEnergyOfferService _idempotentCreateEnergyOfferService;
+
     public EnergyOffersController(
         CreateEnergyOfferService createEnergyOfferService,
         GetEnergyOfferByIdService getEnergyOfferByIdService,
         GetEnergyOffersService getEnergyOffersService,
         CloseEnergyOfferService closeEnergyOfferService,
         CancelEnergyOfferService cancelEnergyOfferService,
-        UpdateEnergyOfferService updateEnergyOfferService)
+        UpdateEnergyOfferService updateEnergyOfferService,
+        IdempotentCreateEnergyOfferService idempotentCreateEnergyOfferService)
     {
         _createEnergyOfferService = createEnergyOfferService;
         _getEnergyOfferByIdService = getEnergyOfferByIdService;
@@ -39,19 +42,36 @@ public class EnergyOffersController : ControllerBase
         _closeEnergyOfferService = closeEnergyOfferService;
         _cancelEnergyOfferService = cancelEnergyOfferService;
         _updateEnergyOfferService = updateEnergyOfferService;
+        _idempotentCreateEnergyOfferService = idempotentCreateEnergyOfferService;
     }
 
     [HttpPost]
-    public async Task<ActionResult<CreateEnergyOfferResult>> Create(
+    public async Task<IActionResult> Create(
         CreateEnergyOfferRequest request,
+        [FromHeader(Name = "Idempotency-Key")] string? idempotencyKey,
         CancellationToken cancellationToken)
     {
-        var result = await _createEnergyOfferService.ExecuteAsync(
-            request,
-            cancellationToken);
+        CreateEnergyOfferResult result;
 
-        return Created(
-            $"/api/energy-offers/{result.Id}",
+        if (!string.IsNullOrWhiteSpace(idempotencyKey))
+        {
+            result =
+                await _idempotentCreateEnergyOfferService.ExecuteAsync(
+                    idempotencyKey,
+                    request,
+                    cancellationToken);
+        }
+        else
+        {
+            result =
+                await _createEnergyOfferService.ExecuteAsync(
+                    request,
+                    cancellationToken);
+        }
+
+        return CreatedAtAction(
+            nameof(GetById),
+            new { id = result.Id },
             result);
     }
 
