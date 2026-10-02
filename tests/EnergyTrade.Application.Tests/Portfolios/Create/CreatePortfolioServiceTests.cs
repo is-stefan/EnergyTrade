@@ -13,19 +13,22 @@ public class CreatePortfolioServiceTests
         // Arrange
         var repository = new FakePortfolioRepository();
 
+        var userId = Guid.NewGuid();
+
         var service = new CreatePortfolioService(repository);
 
         var request = new CreatePortfolioRequest(
-            Guid.NewGuid(),
             "Main Portfolio",
             Currency.EUR);
 
         // Act
-        var result = await service.ExecuteAsync(request);
+        var result = await service.ExecuteAsync(
+            userId,
+            request);
 
         // Assert
         Assert.NotEqual(Guid.Empty, result.Id);
-        Assert.Equal(request.UserId, result.UserId);
+        Assert.Equal(userId, result.UserId);
         Assert.Equal("Main Portfolio", result.Name);
         Assert.Equal(Currency.EUR, result.BaseCurrency);
         Assert.Equal(PortfolioStatus.Active, result.Status);
@@ -44,13 +47,14 @@ public class CreatePortfolioServiceTests
         var service = new CreatePortfolioService(repository);
 
         var request = new CreatePortfolioRequest(
-            Guid.Empty,
             "Main Portfolio",
             Currency.EUR);
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(
-            () => service.ExecuteAsync(request));
+            () => service.ExecuteAsync(
+                Guid.Empty,
+                request));
 
         Assert.Equal(0, repository.AddCallCount);
         Assert.Equal(0, repository.SaveChangesCallCount);

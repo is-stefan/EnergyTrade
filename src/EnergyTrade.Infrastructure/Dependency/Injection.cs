@@ -7,6 +7,8 @@ using EnergyTrade.Infrastructure.Persistence.Transactions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using EnergyTrade.Application.Abstractions.Security;
+using EnergyTrade.Infrastructure.Security;
 
 namespace EnergyTrade.Infrastructure;
 
@@ -30,6 +32,13 @@ public static class DependencyInjection
         services.AddScoped<IPortfolioRepository, PortfolioRepository>();
         services.AddScoped<ITransactionManager, EfTransactionManager>();
         services.AddScoped<IIdempotencyRepository, IdempotencyRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
+
+        services.Configure<JwtSettings>(
+            configuration.GetSection("Jwt"));
+
+        services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
         return services;
     }

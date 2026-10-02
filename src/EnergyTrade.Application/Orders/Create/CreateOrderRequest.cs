@@ -3,7 +3,6 @@ using EnergyTrade.Domain.Enums;
 namespace EnergyTrade.Application.Orders.Create;
 
 public sealed record CreateOrderRequest(
-    Guid BuyerId,
     Guid PortfolioId,
     EnergyType EnergyType,
     decimal QuantityMWh,

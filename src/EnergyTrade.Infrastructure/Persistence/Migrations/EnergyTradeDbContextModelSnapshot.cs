@@ -109,6 +109,12 @@ namespace EnergyTrade.Infrastructure.Persistence.Migrations
                         .HasColumnType("NVARCHAR2(100)")
                         .HasColumnName("OPERATION");
 
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("NVARCHAR2(64)")
+                        .HasColumnName("REQUEST_HASH");
+
                     b.Property<string>("Response")
                         .IsRequired()
                         .HasColumnType("CLOB")
@@ -304,6 +310,37 @@ namespace EnergyTrade.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("TRADES", (string)null);
+                });
+
+            modelBuilder.Entity("EnergyTrade.Domain.Entities.User", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("RAW(16)")
+                        .HasColumnName("ID");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE")
+                        .HasColumnName("CREATED_AT");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("NVARCHAR2(256)")
+                        .HasColumnName("EMAIL");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("NVARCHAR2(500)")
+                        .HasColumnName("PASSWORD_HASH");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.ToTable("USERS", (string)null);
                 });
 
             modelBuilder.Entity("EnergyTrade.Domain.Entities.EnergyOffer", b =>

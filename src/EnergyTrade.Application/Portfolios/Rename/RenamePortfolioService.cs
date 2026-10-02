@@ -1,4 +1,5 @@
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Common.Exceptions;
 
 namespace EnergyTrade.Application.Portfolios.Rename;
 
@@ -13,6 +14,7 @@ public sealed class RenamePortfolioService
     }
 
     public async Task<bool> ExecuteAsync(
+        Guid userId,
         Guid portfolioId,
         RenamePortfolioRequest request,
         CancellationToken cancellationToken = default)
@@ -24,6 +26,12 @@ public sealed class RenamePortfolioService
         if (portfolio is null)
         {
             return false;
+        }
+
+        if (portfolio.UserId != userId)
+        {
+            throw new ForbiddenException(
+                "The portfolio does not belong to the authenticated user.");
         }
 
         portfolio.Rename(request.Name);

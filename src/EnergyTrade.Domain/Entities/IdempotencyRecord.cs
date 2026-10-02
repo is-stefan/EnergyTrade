@@ -8,6 +8,8 @@ public sealed class IdempotencyRecord
 
     public string Operation { get; private set; }
 
+    public string RequestHash { get; private set; }
+
     public string Response { get; private set; }
 
     public int StatusCode { get; private set; }
@@ -18,12 +20,14 @@ public sealed class IdempotencyRecord
     {
         Key = string.Empty;
         Operation = string.Empty;
+        RequestHash = string.Empty;
         Response = string.Empty;
     }
 
     public IdempotencyRecord(
         string key,
         string operation,
+        string requestHash,
         string response,
         int statusCode)
     {
@@ -39,6 +43,13 @@ public sealed class IdempotencyRecord
             throw new ArgumentException(
                 "Operation cannot be empty.",
                 nameof(operation));
+        }
+
+        if (string.IsNullOrWhiteSpace(requestHash))
+        {
+            throw new ArgumentException(
+                "Request hash cannot be empty.",
+                nameof(requestHash));
         }
 
         if (string.IsNullOrWhiteSpace(response))
@@ -57,6 +68,7 @@ public sealed class IdempotencyRecord
         Id = Guid.NewGuid();
         Key = key.Trim();
         Operation = operation.Trim();
+        RequestHash = requestHash.Trim();
         Response = response;
         StatusCode = statusCode;
         CreatedAt = DateTimeOffset.UtcNow;

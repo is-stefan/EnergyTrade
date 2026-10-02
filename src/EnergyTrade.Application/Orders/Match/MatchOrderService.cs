@@ -1,7 +1,7 @@
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.Positions.ApplyTrade;
 using EnergyTrade.Domain.Entities;
-using EnergyTrade.Application.Common.Exceptions;
 
 namespace EnergyTrade.Application.Orders.Match;
 
@@ -10,9 +10,7 @@ public sealed class MatchOrderService
     private readonly IOrderRepository _orderRepository;
     private readonly IEnergyOfferRepository _energyOfferRepository;
     private readonly ITradeRepository _tradeRepository;
-
     private readonly ApplyTradeToPositionsService _applyTradeToPositionsService;
-
     private readonly ITransactionManager _transactionManager;
 
     public MatchOrderService(
@@ -30,6 +28,7 @@ public sealed class MatchOrderService
     }
 
     public async Task<MatchOrderResult?> ExecuteAsync(
+        Guid userId,
         Guid orderId,
         CancellationToken cancellationToken = default)
     {
@@ -48,6 +47,12 @@ public sealed class MatchOrderService
                     {
                         result = null;
                         return;
+                    }
+
+                    if (order.BuyerId != userId)
+                    {
+                        throw new ForbiddenException(
+                            "The order does not belong to the authenticated user.");
                     }
 
                     var offer = await _energyOfferRepository.FindMatchingAsync(

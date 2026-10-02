@@ -37,6 +37,7 @@ public sealed class EnergyOfferRepository : IEnergyOfferRepository
     }
 
     public async Task<IReadOnlyList<EnergyOffer>> GetAllAsync(
+        Guid? sellerId = null,
         OfferStatus? status = null,
         EnergyType? energyType = null,
         int page = 1,
@@ -46,6 +47,12 @@ public sealed class EnergyOfferRepository : IEnergyOfferRepository
         var query = _dbContext.EnergyOffers
             .AsNoTracking()
             .AsQueryable();
+
+        if (sellerId.HasValue)
+        {
+            query = query.Where(
+                offer => offer.SellerId == sellerId.Value);
+        }
 
         if (status.HasValue)
         {
@@ -67,6 +74,7 @@ public sealed class EnergyOfferRepository : IEnergyOfferRepository
     }
 
     public async Task<int> CountAsync(
+        Guid? sellerId = null,
         OfferStatus? status = null,
         EnergyType? energyType = null,
         CancellationToken cancellationToken = default)
@@ -74,6 +82,12 @@ public sealed class EnergyOfferRepository : IEnergyOfferRepository
         var query = _dbContext.EnergyOffers
             .AsNoTracking()
             .AsQueryable();
+
+        if (sellerId.HasValue)
+        {
+            query = query.Where(
+                offer => offer.SellerId == sellerId.Value);
+        }
 
         if (status.HasValue)
         {

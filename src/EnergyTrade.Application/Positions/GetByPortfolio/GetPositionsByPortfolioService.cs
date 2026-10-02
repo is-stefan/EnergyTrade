@@ -1,21 +1,41 @@
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Common.Exceptions;
 
 namespace EnergyTrade.Application.Positions.GetByPortfolio;
 
 public sealed class GetPositionsByPortfolioService
 {
     private readonly IPositionRepository _positionRepository;
+    private readonly IPortfolioRepository _portfolioRepository;
 
     public GetPositionsByPortfolioService(
-        IPositionRepository positionRepository)
+        IPositionRepository positionRepository,
+        IPortfolioRepository portfolioRepository)
     {
         _positionRepository = positionRepository;
+        _portfolioRepository = portfolioRepository;
     }
 
-    public async Task<IReadOnlyList<GetPositionsByPortfolioResult>> ExecuteAsync(
+    public async Task<IReadOnlyList<GetPositionsByPortfolioResult>?> ExecuteAsync(
+        Guid userId,
         Guid portfolioId,
         CancellationToken cancellationToken = default)
     {
+        var portfolio = await _portfolioRepository.GetByIdAsync(
+            portfolioId,
+            cancellationToken);
+
+        if (portfolio is null)
+        {
+            return null;
+        }
+
+        if (portfolio.UserId != userId)
+        {
+            throw new ForbiddenException(
+                "The portfolio does not belong to the authenticated user.");
+        }
+
         var positions =
             await _positionRepository.GetByPortfolioIdAsync(
                 portfolioId,

@@ -32,4 +32,6 @@ public class EnergyTradeDbContext : DbContext
     public DbSet<IdempotencyRecord> IdempotencyRecords =>
         Set<IdempotencyRecord>();
 
+    public DbSet<User> Users => Set<User>();
+
 }

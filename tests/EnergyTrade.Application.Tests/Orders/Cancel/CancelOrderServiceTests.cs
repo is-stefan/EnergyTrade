@@ -1,4 +1,5 @@
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.Orders.Cancel;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
@@ -8,7 +9,7 @@ namespace EnergyTrade.Application.Tests.Orders.Cancel;
 public class CancelOrderServiceTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenOrderExists_CancelsOrderAndSavesChanges()
+    public async Task ExecuteAsync_WhenOrderExistsAndBelongsToUser_CancelsOrderAndSavesChanges()
     {
         // Arrange
         var order = CreateValidOrder();
@@ -17,7 +18,9 @@ public class CancelOrderServiceTests
         var service = new CancelOrderService(repository);
 
         // Act
-        var result = await service.ExecuteAsync(order.Id);
+        var result = await service.ExecuteAsync(
+            order.BuyerId,
+            order.Id);
 
         // Assert
         Assert.True(result);
@@ -34,10 +37,37 @@ public class CancelOrderServiceTests
         var service = new CancelOrderService(repository);
 
         // Act
-        var result = await service.ExecuteAsync(Guid.NewGuid());
+        var result = await service.ExecuteAsync(
+            Guid.NewGuid(),
+            Guid.NewGuid());
 
         // Assert
         Assert.False(result);
+        Assert.Equal(0, repository.SaveChangesCallCount);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenOrderBelongsToAnotherUser_ThrowsForbiddenException()
+    {
+        // Arrange
+        var order = CreateValidOrder();
+
+        var repository = new FakeOrderRepository(order);
+        var service = new CancelOrderService(repository);
+
+        var anotherUserId = Guid.NewGuid();
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ForbiddenException>(
+            () => service.ExecuteAsync(
+                anotherUserId,
+                order.Id));
+
+        // Assert
+        Assert.Equal(
+            "The order does not belong to the authenticated user.",
+            exception.Message);
+
         Assert.Equal(0, repository.SaveChangesCallCount);
     }
 
@@ -53,7 +83,9 @@ public class CancelOrderServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.ExecuteAsync(order.Id));
+            () => service.ExecuteAsync(
+                order.BuyerId,
+                order.Id));
 
         Assert.Equal(0, repository.SaveChangesCallCount);
     }
@@ -70,7 +102,9 @@ public class CancelOrderServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.ExecuteAsync(order.Id));
+            () => service.ExecuteAsync(
+                order.BuyerId,
+                order.Id));
 
         Assert.Equal(0, repository.SaveChangesCallCount);
     }

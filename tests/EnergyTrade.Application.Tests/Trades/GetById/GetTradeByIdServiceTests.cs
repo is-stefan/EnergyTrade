@@ -1,4 +1,5 @@
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.Trades.GetById;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
@@ -8,7 +9,7 @@ namespace EnergyTrade.Application.Tests.Trades.GetById;
 public class GetTradeByIdServiceTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenTradeExists_ReturnsTrade()
+    public async Task ExecuteAsync_WhenUserIsSeller_ReturnsTrade()
     {
         // Arrange
         var trade = CreateTrade();
@@ -16,7 +17,9 @@ public class GetTradeByIdServiceTests
         var service = new GetTradeByIdService(repository);
 
         // Act
-        var result = await service.ExecuteAsync(trade.Id);
+        var result = await service.ExecuteAsync(
+            trade.SellerId,
+            trade.Id);
 
         // Assert
         Assert.NotNull(result);
@@ -33,6 +36,46 @@ public class GetTradeByIdServiceTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_WhenUserIsBuyer_ReturnsTrade()
+    {
+        // Arrange
+        var trade = CreateTrade();
+        var repository = new FakeTradeRepository(trade);
+        var service = new GetTradeByIdService(repository);
+
+        // Act
+        var result = await service.ExecuteAsync(
+            trade.BuyerId,
+            trade.Id);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(trade.Id, result.Id);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenTradeBelongsToAnotherUser_ThrowsForbiddenException()
+    {
+        // Arrange
+        var trade = CreateTrade();
+        var repository = new FakeTradeRepository(trade);
+        var service = new GetTradeByIdService(repository);
+
+        var anotherUserId = Guid.NewGuid();
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ForbiddenException>(
+            () => service.ExecuteAsync(
+                anotherUserId,
+                trade.Id));
+
+        // Assert
+        Assert.Equal(
+            "The trade does not belong to the authenticated user.",
+            exception.Message);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_WhenTradeDoesNotExist_ReturnsNull()
     {
         // Arrange
@@ -40,7 +83,9 @@ public class GetTradeByIdServiceTests
         var service = new GetTradeByIdService(repository);
 
         // Act
-        var result = await service.ExecuteAsync(Guid.NewGuid());
+        var result = await service.ExecuteAsync(
+            Guid.NewGuid(),
+            Guid.NewGuid());
 
         // Assert
         Assert.Null(result);
@@ -87,10 +132,8 @@ public class GetTradeByIdServiceTests
             return Task.FromResult<Trade?>(null);
         }
 
-        
         public Task<IReadOnlyList<Trade>> GetAllAsync(
-            Guid? sellerId = null,
-            Guid? buyerId = null,
+            Guid? participantId = null,
             EnergyType? energyType = null,
             int page = 1,
             int pageSize = 10,
@@ -101,13 +144,11 @@ public class GetTradeByIdServiceTests
         }
 
         public Task<int> CountAsync(
-            Guid? sellerId = null,
-            Guid? buyerId = null,
+            Guid? participantId = null,
             EnergyType? energyType = null,
             CancellationToken cancellationToken = default)
         {
             return Task.FromResult(0);
         }
     }
-
 }

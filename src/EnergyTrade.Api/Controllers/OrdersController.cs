@@ -6,9 +6,12 @@ using EnergyTrade.Domain.Enums;
 using EnergyTrade.Application.Orders.Cancel;
 using EnergyTrade.Application.Orders.Match;
 using EnergyTrade.Application.Idempotency;
+using EnergyTrade.Application.Abstractions.Authentication;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EnergyTrade.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/orders")]
 public class OrdersController : ControllerBase
@@ -25,13 +28,16 @@ public class OrdersController : ControllerBase
 
     private readonly IdempotentCreateOrderService _idempotentCreateOrderService;
 
+    private readonly ICurrentUserService _currentUserService;
+
     public OrdersController(
         CreateOrderService createOrderService,
         GetOrderByIdService getOrderByIdService,
         GetOrdersService getOrdersService,
         CancelOrderService cancelOrderService,
         MatchOrderService matchOrderService,
-        IdempotentCreateOrderService idempotentCreateOrderService)
+        IdempotentCreateOrderService idempotentCreateOrderService,
+        ICurrentUserService currentUserService)
     {
         _createOrderService = createOrderService;
         _getOrderByIdService = getOrderByIdService;
@@ -39,6 +45,7 @@ public class OrdersController : ControllerBase
         _cancelOrderService = cancelOrderService;
         _matchOrderService = matchOrderService;
         _idempotentCreateOrderService = idempotentCreateOrderService;
+        _currentUserService = currentUserService;
     }
 
     [HttpGet("{id:guid}")]
@@ -46,7 +53,10 @@ public class OrdersController : ControllerBase
         Guid id,
         CancellationToken cancellationToken)
     {
+        var userId = _currentUserService.UserId;
+
         var result = await _getOrderByIdService.ExecuteAsync(
+            userId,
             id,
             cancellationToken);
 
@@ -57,18 +67,19 @@ public class OrdersController : ControllerBase
 
         return Ok(result);
     }
-
+    
     [HttpGet]
     public async Task<ActionResult<PagedOrdersResult>> GetAll(
-        [FromQuery] Guid? buyerId,
         [FromQuery] EnergyType? energyType,
         [FromQuery] OrderStatus? status,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
         CancellationToken cancellationToken = default)
     {
+        var userId = _currentUserService.UserId;
+
         var result = await _getOrdersService.ExecuteAsync(
-            buyerId,
+            userId,
             energyType,
             status,
             page,
@@ -79,28 +90,34 @@ public class OrdersController : ControllerBase
     }
 
     [HttpPatch("{id:guid}/cancel")]
-    public async Task<IActionResult> Cancel(
-        Guid id,
-        CancellationToken cancellationToken)
+public async Task<IActionResult> Cancel(
+    Guid id,
+    CancellationToken cancellationToken)
+{
+    var userId = _currentUserService.UserId;
+
+    var success = await _cancelOrderService.ExecuteAsync(
+        userId,
+        id,
+        cancellationToken);
+
+    if (!success)
     {
-        var success = await _cancelOrderService.ExecuteAsync(
-            id,
-            cancellationToken);
-
-        if (!success)
-        {
-            return NotFound();
-        }
-
-        return NoContent();
+        return NotFound();
     }
+
+    return NoContent();
+}
 
     [HttpPost("{id:guid}/match")]
     public async Task<ActionResult<MatchOrderResult>> Match(
         Guid id,
         CancellationToken cancellationToken)
     {
+        var userId = _currentUserService.UserId;
+
         var result = await _matchOrderService.ExecuteAsync(
+            userId,
             id,
             cancellationToken);
 
@@ -118,11 +135,14 @@ public class OrdersController : ControllerBase
         [FromHeader(Name = "Idempotency-Key")] string? idempotencyKey,
         CancellationToken cancellationToken)
     {
+        var userId = _currentUserService.UserId;
+
         CreateOrderResult result;
 
         if (!string.IsNullOrWhiteSpace(idempotencyKey))
         {
             result = await _idempotentCreateOrderService.ExecuteAsync(
+                userId,
                 idempotencyKey,
                 request,
                 cancellationToken);
@@ -130,6 +150,7 @@ public class OrdersController : ControllerBase
         else
         {
             result = await _createOrderService.ExecuteAsync(
+                userId,
                 request,
                 cancellationToken);
         }

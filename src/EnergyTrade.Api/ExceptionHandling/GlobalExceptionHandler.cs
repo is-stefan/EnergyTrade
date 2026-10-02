@@ -1,3 +1,4 @@
+using EnergyTrade.Application.Common.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,17 +13,25 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
     {
         var statusCode = exception switch
         {
+            ForbiddenException => StatusCodes.Status403Forbidden,
+            IdempotencyConflictException => StatusCodes.Status409Conflict,
             ArgumentException => StatusCodes.Status400BadRequest,
             InvalidOperationException => StatusCodes.Status400BadRequest,
             _ => StatusCodes.Status500InternalServerError
         };
 
+        var title = statusCode switch
+        {
+            StatusCodes.Status400BadRequest => "Invalid request",
+            StatusCodes.Status403Forbidden => "Forbidden",
+            StatusCodes.Status409Conflict => "Conflict",
+            _ => "Internal server error"
+        };
+
         var problemDetails = new ProblemDetails
         {
             Status = statusCode,
-            Title = statusCode == StatusCodes.Status400BadRequest
-                ? "Invalid request"
-                : "Internal server error",
+            Title = title,
             Detail = exception.Message
         };
 

@@ -1,4 +1,5 @@
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Common.Exceptions;
 
 namespace EnergyTrade.Application.EnergyOffers.Close;
 
@@ -13,6 +14,7 @@ public sealed class CloseEnergyOfferService
     }
 
     public async Task<bool> ExecuteAsync(
+        Guid userId,
         Guid id,
         CancellationToken cancellationToken = default)
     {
@@ -23,6 +25,12 @@ public sealed class CloseEnergyOfferService
         if (offer is null)
         {
             return false;
+        }
+
+        if (offer.SellerId != userId)
+        {
+            throw new ForbiddenException(
+                "The energy offer does not belong to the authenticated user.");
         }
 
         offer.Close();

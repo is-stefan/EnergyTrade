@@ -14,6 +14,7 @@ public interface IEnergyOfferRepository
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<EnergyOffer>> GetAllAsync(
+        Guid? sellerId = null,
         OfferStatus? status = null,
         EnergyType? energyType = null,
         int page = 1,
@@ -21,11 +22,10 @@ public interface IEnergyOfferRepository
         CancellationToken cancellationToken = default);
 
     Task<int> CountAsync(
+        Guid? sellerId = null,
         OfferStatus? status = null,
         EnergyType? energyType = null,
         CancellationToken cancellationToken = default);
-
-
     Task SaveChangesAsync(
         CancellationToken cancellationToken = default);
 

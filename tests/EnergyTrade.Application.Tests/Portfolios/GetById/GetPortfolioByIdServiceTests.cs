@@ -1,4 +1,5 @@
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.Portfolios.GetById;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
@@ -8,7 +9,7 @@ namespace EnergyTrade.Application.Tests.Portfolios.GetById;
 public class GetPortfolioByIdServiceTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenPortfolioExists_ReturnsPortfolio()
+    public async Task ExecuteAsync_WhenPortfolioExistsAndBelongsToUser_ReturnsPortfolio()
     {
         var portfolio = new Portfolio(
             Guid.NewGuid(),
@@ -16,10 +17,11 @@ public class GetPortfolioByIdServiceTests
             Currency.EUR);
 
         var repository = new FakePortfolioRepository(portfolio);
-
         var service = new GetPortfolioByIdService(repository);
 
-        var result = await service.ExecuteAsync(portfolio.Id);
+        var result = await service.ExecuteAsync(
+            portfolio.UserId,
+            portfolio.Id);
 
         Assert.NotNull(result);
         Assert.Equal(portfolio.Id, result.Id);
@@ -33,12 +35,36 @@ public class GetPortfolioByIdServiceTests
     public async Task ExecuteAsync_WhenPortfolioDoesNotExist_ReturnsNull()
     {
         var repository = new FakePortfolioRepository(null);
-
         var service = new GetPortfolioByIdService(repository);
 
-        var result = await service.ExecuteAsync(Guid.NewGuid());
+        var result = await service.ExecuteAsync(
+            Guid.NewGuid(),
+            Guid.NewGuid());
 
         Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenPortfolioBelongsToAnotherUser_ThrowsForbiddenException()
+    {
+        var portfolio = new Portfolio(
+            Guid.NewGuid(),
+            "Trading Portfolio",
+            Currency.EUR);
+
+        var repository = new FakePortfolioRepository(portfolio);
+        var service = new GetPortfolioByIdService(repository);
+
+        var anotherUserId = Guid.NewGuid();
+
+        var exception = await Assert.ThrowsAsync<ForbiddenException>(
+            () => service.ExecuteAsync(
+                anotherUserId,
+                portfolio.Id));
+
+        Assert.Equal(
+            "The portfolio does not belong to the authenticated user.",
+            exception.Message);
     }
 
     private sealed class FakePortfolioRepository

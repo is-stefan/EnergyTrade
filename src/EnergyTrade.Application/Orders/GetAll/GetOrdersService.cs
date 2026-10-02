@@ -14,13 +14,20 @@ public sealed class GetOrdersService
     }
 
     public async Task<PagedOrdersResult> ExecuteAsync(
-        Guid? buyerId = null,
+        Guid userId,
         EnergyType? energyType = null,
         OrderStatus? status = null,
         int page = 1,
         int pageSize = 10,
         CancellationToken cancellationToken = default)
     {
+        if (userId == Guid.Empty)
+        {
+            throw new ArgumentException(
+                "User id cannot be empty.",
+                nameof(userId));
+        }
+
         if (page < 1)
         {
             throw new ArgumentOutOfRangeException(
@@ -36,7 +43,7 @@ public sealed class GetOrdersService
         }
 
         var orders = await _orderRepository.GetAllAsync(
-            buyerId,
+            userId,
             energyType,
             status,
             page,
@@ -44,7 +51,7 @@ public sealed class GetOrdersService
             cancellationToken);
 
         var totalCount = await _orderRepository.CountAsync(
-            buyerId,
+            userId,
             energyType,
             status,
             cancellationToken);

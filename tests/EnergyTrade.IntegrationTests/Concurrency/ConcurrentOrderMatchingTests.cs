@@ -150,8 +150,12 @@ public class ConcurrentOrderMatchingTests
 
             // Act
             var results = await Task.WhenAll(
-                matchService1.ExecuteAsync(order1.Id),
-                matchService2.ExecuteAsync(order2.Id));
+                matchService1.ExecuteAsync(
+                    order1.BuyerId,
+                    order1.Id),
+                matchService2.ExecuteAsync(
+                    order2.BuyerId,
+                    order2.Id));
 
             // Assert - business result
             Assert.Equal(

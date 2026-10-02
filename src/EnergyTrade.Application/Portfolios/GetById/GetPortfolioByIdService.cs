@@ -1,4 +1,5 @@
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Common.Exceptions;
 
 namespace EnergyTrade.Application.Portfolios.GetById;
 
@@ -13,6 +14,7 @@ public sealed class GetPortfolioByIdService
     }
 
     public async Task<GetPortfolioByIdResult?> ExecuteAsync(
+        Guid userId,
         Guid id,
         CancellationToken cancellationToken = default)
     {
@@ -23,6 +25,12 @@ public sealed class GetPortfolioByIdService
         if (portfolio is null)
         {
             return null;
+        }
+
+        if (portfolio.UserId != userId)
+        {
+            throw new ForbiddenException(
+                "The portfolio does not belong to the authenticated user.");
         }
 
         return new GetPortfolioByIdResult(

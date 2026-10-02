@@ -2,6 +2,7 @@ using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.EnergyOffers.Create;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
+using EnergyTrade.Application.Common.Exceptions;
 
 namespace EnergyTrade.Application.Tests.EnergyOffers.Create;
 
@@ -14,6 +15,7 @@ public class CreateEnergyOfferServiceTests
         var repository = new FakeEnergyOfferRepository();
 
         var sellerId = Guid.NewGuid();
+        var portfolioId = Guid.NewGuid();
 
         var deliveryStart = new DateTimeOffset(
             2026, 10, 1, 0, 0, 0, TimeSpan.Zero);
@@ -22,8 +24,7 @@ public class CreateEnergyOfferServiceTests
             2026, 10, 31, 0, 0, 0, TimeSpan.Zero);
 
         var request = new CreateEnergyOfferRequest(
-            sellerId,
-            Guid.NewGuid(),
+            portfolioId,
             EnergyType.Solar,
             100m,
             82.50m,
@@ -32,7 +33,7 @@ public class CreateEnergyOfferServiceTests
             deliveryEnd);
 
         var portfolio = new Portfolio(
-            request.SellerId,
+            sellerId,
             "Test Portfolio",
             request.Currency);
 
@@ -44,7 +45,9 @@ public class CreateEnergyOfferServiceTests
             portfolioRepository);
 
         // Act
-        var result = await service.ExecuteAsync(request);
+        var result = await service.ExecuteAsync(
+            sellerId,
+            request);
 
         // Assert
         Assert.Equal(1, repository.AddCallCount);
@@ -73,12 +76,14 @@ public class CreateEnergyOfferServiceTests
         // Arrange
         var repository = new FakeEnergyOfferRepository();
 
+        var sellerId = Guid.NewGuid();
+        var portfolioId = Guid.NewGuid();
+
         var deliveryStart = DateTimeOffset.UtcNow.AddDays(1);
         var deliveryEnd = deliveryStart.AddDays(30);
 
         var request = new CreateEnergyOfferRequest(
-            Guid.NewGuid(),
-            Guid.NewGuid(),
+            portfolioId,
             EnergyType.Wind,
             0m,
             80m,
@@ -87,7 +92,7 @@ public class CreateEnergyOfferServiceTests
             deliveryEnd);
 
         var portfolio = new Portfolio(
-            request.SellerId,
+            sellerId,
             "Test Portfolio",
             request.Currency);
 
@@ -101,7 +106,9 @@ public class CreateEnergyOfferServiceTests
         // Act
         var exception =
             await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-                () => service.ExecuteAsync(request));
+                () => service.ExecuteAsync(
+                    sellerId,
+                    request));
 
         // Assert
         Assert.Equal("quantityMWh", exception.ParamName);
@@ -116,6 +123,9 @@ public class CreateEnergyOfferServiceTests
         // Arrange
         var repository = new FakeEnergyOfferRepository();
 
+        var sellerId = Guid.NewGuid();
+        var portfolioId = Guid.NewGuid();
+
         var portfolioRepository =
             new FakePortfolioRepository(null);
 
@@ -127,8 +137,7 @@ public class CreateEnergyOfferServiceTests
         var deliveryEnd = deliveryStart.AddDays(30);
 
         var request = new CreateEnergyOfferRequest(
-            Guid.NewGuid(),
-            Guid.NewGuid(),
+            portfolioId,
             EnergyType.Solar,
             100m,
             80m,
@@ -138,7 +147,9 @@ public class CreateEnergyOfferServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(
-            () => service.ExecuteAsync(request));
+            () => service.ExecuteAsync(
+                sellerId,
+                request));
 
         Assert.Equal(0, repository.AddCallCount);
         Assert.Null(repository.AddedOffer);
@@ -150,12 +161,14 @@ public class CreateEnergyOfferServiceTests
         // Arrange
         var repository = new FakeEnergyOfferRepository();
 
+        var sellerId = Guid.NewGuid();
+        var portfolioId = Guid.NewGuid();
+
         var deliveryStart = DateTimeOffset.UtcNow.AddDays(1);
         var deliveryEnd = deliveryStart.AddDays(30);
 
         var request = new CreateEnergyOfferRequest(
-            Guid.NewGuid(),
-            Guid.NewGuid(),
+            portfolioId,
             EnergyType.Solar,
             100m,
             80m,
@@ -164,7 +177,7 @@ public class CreateEnergyOfferServiceTests
             deliveryEnd);
 
         var portfolio = new Portfolio(
-            request.SellerId,
+            sellerId,
             "Test Portfolio",
             request.Currency);
 
@@ -179,7 +192,53 @@ public class CreateEnergyOfferServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.ExecuteAsync(request));
+            () => service.ExecuteAsync(
+                sellerId,
+                request));
+
+        Assert.Equal(0, repository.AddCallCount);
+        Assert.Null(repository.AddedOffer);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenPortfolioBelongsToAnotherUser_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var repository = new FakeEnergyOfferRepository();
+
+        var authenticatedUserId = Guid.NewGuid();
+        var portfolioOwnerId = Guid.NewGuid();
+        var portfolioId = Guid.NewGuid();
+
+        var deliveryStart = DateTimeOffset.UtcNow.AddDays(1);
+        var deliveryEnd = deliveryStart.AddDays(30);
+
+        var request = new CreateEnergyOfferRequest(
+            portfolioId,
+            EnergyType.Solar,
+            100m,
+            80m,
+            Currency.EUR,
+            deliveryStart,
+            deliveryEnd);
+
+        var portfolio = new Portfolio(
+            portfolioOwnerId,
+            "Test Portfolio",
+            request.Currency);
+
+        var portfolioRepository =
+            new FakePortfolioRepository(portfolio);
+
+        var service = new CreateEnergyOfferService(
+            repository,
+            portfolioRepository);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ForbiddenException>(
+            () => service.ExecuteAsync(
+                authenticatedUserId,
+                request));
 
         Assert.Equal(0, repository.AddCallCount);
         Assert.Null(repository.AddedOffer);
@@ -210,6 +269,7 @@ public class CreateEnergyOfferServiceTests
         }
 
         public Task<IReadOnlyList<EnergyOffer>> GetAllAsync(
+            Guid? sellerId = null,
             OfferStatus? status = null,
             EnergyType? energyType = null,
             int page = 1,
@@ -221,6 +281,7 @@ public class CreateEnergyOfferServiceTests
         }
 
         public Task<int> CountAsync(
+            Guid? sellerId = null,
             OfferStatus? status = null,
             EnergyType? energyType = null,
             CancellationToken cancellationToken = default)

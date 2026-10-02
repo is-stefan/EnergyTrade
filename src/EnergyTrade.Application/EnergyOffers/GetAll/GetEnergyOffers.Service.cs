@@ -14,12 +14,19 @@ public sealed class GetEnergyOffersService
     }
 
     public async Task<PagedEnergyOffersResult> ExecuteAsync(
+        Guid userId,
         OfferStatus? status = null,
         EnergyType? energyType = null,
         int page = 1,
         int pageSize = 10,
         CancellationToken cancellationToken = default)
     {
+        if (userId == Guid.Empty)
+        {
+            throw new ArgumentException(
+                "User id cannot be empty.",
+                nameof(userId));
+        }
 
         if (page < 1)
         {
@@ -36,6 +43,7 @@ public sealed class GetEnergyOffersService
         }
 
         var offers = await _energyOfferRepository.GetAllAsync(
+            userId,
             status,
             energyType,
             page,
@@ -43,6 +51,7 @@ public sealed class GetEnergyOffersService
             cancellationToken);
 
         var totalCount = await _energyOfferRepository.CountAsync(
+            userId,
             status,
             energyType,
             cancellationToken);

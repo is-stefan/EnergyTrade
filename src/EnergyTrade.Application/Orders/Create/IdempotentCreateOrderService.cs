@@ -26,15 +26,20 @@ public sealed class IdempotentCreateOrderService
     }
 
     public async Task<CreateOrderResult> ExecuteAsync(
+        Guid userId,
         string idempotencyKey,
         CreateOrderRequest request,
         CancellationToken cancellationToken = default)
     {
+        var scopedKey = $"{userId}:{idempotencyKey}";
+
         var existingResult =
-            await _idempotencyService.GetResultAsync<CreateOrderResult>(
-                idempotencyKey,
-                Operation,
-                cancellationToken);
+            await _idempotencyService
+                .GetResultAsync<CreateOrderRequest, CreateOrderResult>(
+                    scopedKey,
+                    Operation,
+                    request,
+                    cancellationToken);
 
         if (existingResult is not null)
         {
@@ -49,12 +54,14 @@ public sealed class IdempotentCreateOrderService
                 async transactionCancellationToken =>
                 {
                     result = await _createOrderService.ExecuteAsync(
+                        userId,
                         request,
                         transactionCancellationToken);
 
                     await _idempotencyService.SaveResultAsync(
-                        idempotencyKey,
+                        scopedKey,
                         Operation,
+                        request,
                         result,
                         201,
                         transactionCancellationToken);
@@ -65,7 +72,7 @@ public sealed class IdempotentCreateOrderService
         {
             var winningRecord =
                 await _idempotencyRepository.GetAsync(
-                    idempotencyKey,
+                    scopedKey,
                     Operation,
                     cancellationToken);
 
@@ -76,9 +83,10 @@ public sealed class IdempotentCreateOrderService
 
             var winningResult =
                 await _idempotencyService
-                    .GetResultAsync<CreateOrderResult>(
-                        idempotencyKey,
+                    .GetResultAsync<CreateOrderRequest, CreateOrderResult>(
+                        scopedKey,
                         Operation,
+                        request,
                         cancellationToken);
 
             if (winningResult is null)

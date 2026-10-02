@@ -6,9 +6,12 @@ using EnergyTrade.Domain.Enums;
 using EnergyTrade.Application.EnergyOffers.Cancel;
 using EnergyTrade.Application.EnergyOffers.Close;
 using EnergyTrade.Application.EnergyOffers.Update;
+using EnergyTrade.Application.Abstractions.Authentication;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EnergyTrade.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/energy-offers")]
 public class EnergyOffersController : ControllerBase
@@ -27,6 +30,8 @@ public class EnergyOffersController : ControllerBase
 
     private readonly IdempotentCreateEnergyOfferService _idempotentCreateEnergyOfferService;
 
+    private readonly ICurrentUserService _currentUserService;
+
     public EnergyOffersController(
         CreateEnergyOfferService createEnergyOfferService,
         GetEnergyOfferByIdService getEnergyOfferByIdService,
@@ -34,7 +39,8 @@ public class EnergyOffersController : ControllerBase
         CloseEnergyOfferService closeEnergyOfferService,
         CancelEnergyOfferService cancelEnergyOfferService,
         UpdateEnergyOfferService updateEnergyOfferService,
-        IdempotentCreateEnergyOfferService idempotentCreateEnergyOfferService)
+        IdempotentCreateEnergyOfferService idempotentCreateEnergyOfferService,
+        ICurrentUserService currentUserService)
     {
         _createEnergyOfferService = createEnergyOfferService;
         _getEnergyOfferByIdService = getEnergyOfferByIdService;
@@ -43,6 +49,7 @@ public class EnergyOffersController : ControllerBase
         _cancelEnergyOfferService = cancelEnergyOfferService;
         _updateEnergyOfferService = updateEnergyOfferService;
         _idempotentCreateEnergyOfferService = idempotentCreateEnergyOfferService;
+        _currentUserService = currentUserService;
     }
 
     [HttpPost]
@@ -51,12 +58,15 @@ public class EnergyOffersController : ControllerBase
         [FromHeader(Name = "Idempotency-Key")] string? idempotencyKey,
         CancellationToken cancellationToken)
     {
+        var userId = _currentUserService.UserId;
+
         CreateEnergyOfferResult result;
 
         if (!string.IsNullOrWhiteSpace(idempotencyKey))
         {
             result =
                 await _idempotentCreateEnergyOfferService.ExecuteAsync(
+                    userId,
                     idempotencyKey,
                     request,
                     cancellationToken);
@@ -65,6 +75,7 @@ public class EnergyOffersController : ControllerBase
         {
             result =
                 await _createEnergyOfferService.ExecuteAsync(
+                    userId,
                     request,
                     cancellationToken);
         }
@@ -80,7 +91,10 @@ public class EnergyOffersController : ControllerBase
         Guid id,
         CancellationToken cancellationToken)
     {
+        var userId = _currentUserService.UserId;
+
         var result = await _getEnergyOfferByIdService.ExecuteAsync(
+            userId,
             id,
             cancellationToken);
 
@@ -100,7 +114,10 @@ public class EnergyOffersController : ControllerBase
         [FromQuery] int pageSize = 10,
         CancellationToken cancellationToken = default)
     {
+        var userId = _currentUserService.UserId;
+
         var result = await _getEnergyOffersService.ExecuteAsync(
+            userId,
             status,
             energyType,
             page,
@@ -115,7 +132,10 @@ public class EnergyOffersController : ControllerBase
         Guid id,
         CancellationToken cancellationToken)
     {
+        var userId = _currentUserService.UserId;
+
         var success = await _closeEnergyOfferService.ExecuteAsync(
+            userId,
             id,
             cancellationToken);
 
@@ -132,7 +152,10 @@ public class EnergyOffersController : ControllerBase
         Guid id,
         CancellationToken cancellationToken)
     {
+        var userId = _currentUserService.UserId;
+
         var success = await _cancelEnergyOfferService.ExecuteAsync(
+            userId,
             id,
             cancellationToken);
 
@@ -150,7 +173,10 @@ public class EnergyOffersController : ControllerBase
         UpdateEnergyOfferRequest request,
         CancellationToken cancellationToken)
     {
+        var userId = _currentUserService.UserId;
+
         var success = await _updateEnergyOfferService.ExecuteAsync(
+            userId,
             id,
             request,
             cancellationToken);

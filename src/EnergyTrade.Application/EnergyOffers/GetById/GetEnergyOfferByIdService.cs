@@ -1,4 +1,5 @@
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Common.Exceptions;
 
 namespace EnergyTrade.Application.EnergyOffers.GetById;
 
@@ -13,6 +14,7 @@ public sealed class GetEnergyOfferByIdService
     }
 
     public async Task<GetEnergyOfferByIdResult?> ExecuteAsync(
+        Guid userId,
         Guid id,
         CancellationToken cancellationToken = default)
     {
@@ -23,6 +25,12 @@ public sealed class GetEnergyOfferByIdService
         if (offer is null)
         {
             return null;
+        }
+
+        if (offer.SellerId != userId)
+        {
+            throw new ForbiddenException(
+                "The energy offer does not belong to the authenticated user.");
         }
 
         return new GetEnergyOfferByIdResult(

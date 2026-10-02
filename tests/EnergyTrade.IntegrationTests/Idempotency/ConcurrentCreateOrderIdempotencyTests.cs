@@ -64,7 +64,6 @@ public class ConcurrentCreateOrderIdempotencyTests
             deliveryStart.AddDays(30);
 
         var request = new CreateOrderRequest(
-            buyerId,
             portfolio.Id,
             EnergyType.Solar,
             100m,
@@ -75,6 +74,9 @@ public class ConcurrentCreateOrderIdempotencyTests
 
         var idempotencyKey =
             $"create-order-{Guid.NewGuid()}";
+
+        var scopedKey =
+            $"{buyerId}:{idempotencyKey}";
 
         // Save portfolio required by CreateOrderService
         await using (var setupScope =
@@ -106,12 +108,14 @@ public class ConcurrentCreateOrderIdempotencyTests
                 scope2.ServiceProvider
                     .GetRequiredService<IdempotentCreateOrderService>();
 
-            // Act - same key, same operation, concurrently
+            // Act - same user, same key, same operation, concurrently
             var results = await Task.WhenAll(
                 service1.ExecuteAsync(
+                    buyerId,
                     idempotencyKey,
                     request),
                 service2.ExecuteAsync(
+                    buyerId,
                     idempotencyKey,
                     request));
 
@@ -144,7 +148,7 @@ public class ConcurrentCreateOrderIdempotencyTests
             var idempotencyRecords =
                 await verificationContext.IdempotencyRecords
                     .Where(x =>
-                        x.Key == idempotencyKey &&
+                        x.Key == scopedKey &&
                         x.Operation == "CreateOrder")
                     .ToListAsync();
 
@@ -167,7 +171,7 @@ public class ConcurrentCreateOrderIdempotencyTests
             var idempotencyRecords =
                 await cleanupContext.IdempotencyRecords
                     .Where(x =>
-                        x.Key == idempotencyKey &&
+                        x.Key == scopedKey &&
                         x.Operation == "CreateOrder")
                     .ToListAsync();
 

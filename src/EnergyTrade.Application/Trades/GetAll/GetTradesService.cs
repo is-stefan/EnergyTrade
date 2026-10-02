@@ -14,13 +14,19 @@ public sealed class GetTradesService
     }
 
     public async Task<PagedTradesResult> ExecuteAsync(
-        Guid? sellerId = null,
-        Guid? buyerId = null,
+        Guid userId,
         EnergyType? energyType = null,
         int page = 1,
         int pageSize = 10,
         CancellationToken cancellationToken = default)
     {
+        if (userId == Guid.Empty)
+        {
+            throw new ArgumentException(
+                "User id cannot be empty.",
+                nameof(userId));
+        }
+
         if (page < 1)
         {
             throw new ArgumentOutOfRangeException(
@@ -36,16 +42,14 @@ public sealed class GetTradesService
         }
 
         var trades = await _tradeRepository.GetAllAsync(
-            sellerId,
-            buyerId,
+            userId,
             energyType,
             page,
             pageSize,
             cancellationToken);
 
         var totalCount = await _tradeRepository.CountAsync(
-            sellerId,
-            buyerId,
+            userId,
             energyType,
             cancellationToken);
 
