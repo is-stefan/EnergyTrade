@@ -29,6 +29,11 @@ public sealed class IdempotencyRecordConfiguration
             .HasMaxLength(100)
             .IsRequired();
 
+        builder.Property(x => x.RequestHash)
+            .HasColumnName("REQUEST_HASH")
+            .HasMaxLength(64)
+            .IsRequired();
+
         builder.Property(x => x.Response)
             .HasColumnName("RESPONSE")
             .HasColumnType("CLOB")

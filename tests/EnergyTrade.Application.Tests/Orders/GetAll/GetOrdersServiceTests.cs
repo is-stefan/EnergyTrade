@@ -8,26 +8,34 @@ namespace EnergyTrade.Application.Tests.Orders.GetAll;
 public class GetOrdersServiceTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenOrdersExist_ReturnsPagedOrders()
+    public async Task ExecuteAsync_WhenOrdersExist_ReturnsOnlyAuthenticatedUserOrders()
     {
         // Arrange
+        var userId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
+
         var firstOrder = CreateOrder(
-            Guid.NewGuid(),
+            userId,
             EnergyType.Solar,
             100m);
 
         var secondOrder = CreateOrder(
-            Guid.NewGuid(),
+            userId,
             EnergyType.Wind,
             200m);
 
+        var otherUserOrder = CreateOrder(
+            otherUserId,
+            EnergyType.Solar,
+            300m);
+
         var repository = new FakeOrderRepository(
-            new[] { firstOrder, secondOrder });
+            new[] { firstOrder, secondOrder, otherUserOrder });
 
         var service = new GetOrdersService(repository);
 
         // Act
-        var result = await service.ExecuteAsync();
+        var result = await service.ExecuteAsync(userId);
 
         // Assert
         Assert.Equal(2, result.Items.Count);
@@ -43,15 +51,15 @@ public class GetOrdersServiceTests
     public async Task ExecuteAsync_WithPagination_ReturnsRequestedPage()
     {
         // Arrange
-        var buyerId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
 
         var orders = new List<Order>
         {
-            CreateOrder(buyerId, EnergyType.Solar, 100m),
-            CreateOrder(buyerId, EnergyType.Solar, 200m),
-            CreateOrder(buyerId, EnergyType.Solar, 300m),
-            CreateOrder(buyerId, EnergyType.Solar, 400m),
-            CreateOrder(buyerId, EnergyType.Solar, 500m)
+            CreateOrder(userId, EnergyType.Solar, 100m),
+            CreateOrder(userId, EnergyType.Solar, 200m),
+            CreateOrder(userId, EnergyType.Solar, 300m),
+            CreateOrder(userId, EnergyType.Solar, 400m),
+            CreateOrder(userId, EnergyType.Solar, 500m)
         };
 
         var repository = new FakeOrderRepository(orders);
@@ -59,6 +67,7 @@ public class GetOrdersServiceTests
 
         // Act
         var result = await service.ExecuteAsync(
+            userId,
             page: 2,
             pageSize: 2);
 
@@ -73,28 +82,27 @@ public class GetOrdersServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithBuyerFilter_ReturnsOnlyBuyerOrders()
+    public async Task ExecuteAsync_ReturnsOnlyAuthenticatedUserOrders()
     {
         // Arrange
-        var buyerId = Guid.NewGuid();
-        var otherBuyerId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
 
         var orders = new List<Order>
         {
-            CreateOrder(buyerId, EnergyType.Solar, 100m),
-            CreateOrder(otherBuyerId, EnergyType.Wind, 200m)
+            CreateOrder(userId, EnergyType.Solar, 100m),
+            CreateOrder(otherUserId, EnergyType.Wind, 200m)
         };
 
         var repository = new FakeOrderRepository(orders);
         var service = new GetOrdersService(repository);
 
         // Act
-        var result = await service.ExecuteAsync(
-            buyerId: buyerId);
+        var result = await service.ExecuteAsync(userId);
 
         // Assert
         Assert.Single(result.Items);
-        Assert.Equal(buyerId, result.Items[0].BuyerId);
+        Assert.Equal(userId, result.Items[0].BuyerId);
         Assert.Equal(1, result.TotalCount);
     }
 
@@ -102,10 +110,13 @@ public class GetOrdersServiceTests
     public async Task ExecuteAsync_WithEnergyTypeFilter_ReturnsOnlyMatchingOrders()
     {
         // Arrange
+        var userId = Guid.NewGuid();
+
         var orders = new List<Order>
         {
-            CreateOrder(Guid.NewGuid(), EnergyType.Solar, 100m),
-            CreateOrder(Guid.NewGuid(), EnergyType.Wind, 200m)
+            CreateOrder(userId, EnergyType.Solar, 100m),
+            CreateOrder(userId, EnergyType.Wind, 200m),
+            CreateOrder(Guid.NewGuid(), EnergyType.Wind, 300m)
         };
 
         var repository = new FakeOrderRepository(orders);
@@ -113,12 +124,26 @@ public class GetOrdersServiceTests
 
         // Act
         var result = await service.ExecuteAsync(
+            userId,
             energyType: EnergyType.Wind);
 
         // Assert
         Assert.Single(result.Items);
         Assert.Equal(EnergyType.Wind, result.Items[0].EnergyType);
+        Assert.Equal(userId, result.Items[0].BuyerId);
         Assert.Equal(1, result.TotalCount);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithEmptyUserId_ThrowsArgumentException()
+    {
+        var repository = new FakeOrderRepository(
+            Array.Empty<Order>());
+
+        var service = new GetOrdersService(repository);
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => service.ExecuteAsync(Guid.Empty));
     }
 
     [Fact]
@@ -130,7 +155,9 @@ public class GetOrdersServiceTests
         var service = new GetOrdersService(repository);
 
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => service.ExecuteAsync(page: 0));
+            () => service.ExecuteAsync(
+                Guid.NewGuid(),
+                page: 0));
     }
 
     [Fact]
@@ -142,7 +169,9 @@ public class GetOrdersServiceTests
         var service = new GetOrdersService(repository);
 
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => service.ExecuteAsync(pageSize: 101));
+            () => service.ExecuteAsync(
+                Guid.NewGuid(),
+                pageSize: 101));
     }
 
     private static Order CreateOrder(

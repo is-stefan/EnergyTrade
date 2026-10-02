@@ -1,4 +1,5 @@
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.Portfolios.Close;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
@@ -8,7 +9,7 @@ namespace EnergyTrade.Application.Tests.Portfolios.Close;
 public class ClosePortfolioServiceTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenPortfolioExists_ClosesPortfolio()
+    public async Task ExecuteAsync_WhenPortfolioExistsAndBelongsToUser_ClosesPortfolio()
     {
         // Arrange
         var portfolio = new Portfolio(
@@ -17,11 +18,12 @@ public class ClosePortfolioServiceTests
             Currency.EUR);
 
         var repository = new FakePortfolioRepository(portfolio);
-
         var service = new ClosePortfolioService(repository);
 
         // Act
-        var result = await service.ExecuteAsync(portfolio.Id);
+        var result = await service.ExecuteAsync(
+            portfolio.UserId,
+            portfolio.Id);
 
         // Assert
         Assert.True(result);
@@ -35,14 +37,43 @@ public class ClosePortfolioServiceTests
     {
         // Arrange
         var repository = new FakePortfolioRepository(null);
-
         var service = new ClosePortfolioService(repository);
 
         // Act
-        var result = await service.ExecuteAsync(Guid.NewGuid());
+        var result = await service.ExecuteAsync(
+            Guid.NewGuid(),
+            Guid.NewGuid());
 
         // Assert
         Assert.False(result);
+        Assert.Equal(0, repository.SaveChangesCallCount);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenPortfolioBelongsToAnotherUser_ThrowsForbiddenException()
+    {
+        // Arrange
+        var portfolio = new Portfolio(
+            Guid.NewGuid(),
+            "Trading Portfolio",
+            Currency.EUR);
+
+        var repository = new FakePortfolioRepository(portfolio);
+        var service = new ClosePortfolioService(repository);
+
+        var anotherUserId = Guid.NewGuid();
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ForbiddenException>(
+            () => service.ExecuteAsync(
+                anotherUserId,
+                portfolio.Id));
+
+        // Assert
+        Assert.Equal(
+            "The portfolio does not belong to the authenticated user.",
+            exception.Message);
+
         Assert.Equal(0, repository.SaveChangesCallCount);
     }
 
@@ -58,12 +89,13 @@ public class ClosePortfolioServiceTests
         portfolio.Close();
 
         var repository = new FakePortfolioRepository(portfolio);
-
         var service = new ClosePortfolioService(repository);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.ExecuteAsync(portfolio.Id));
+            () => service.ExecuteAsync(
+                portfolio.UserId,
+                portfolio.Id));
 
         Assert.Equal(0, repository.SaveChangesCallCount);
     }

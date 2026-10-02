@@ -644,3 +644,170 @@ Idempotency-Key: offer-test-001
   "deliveryStart": "2027-04-01T00:00:00+00:00",
   "deliveryEnd": "2027-04-30T00:00:00+00:00"
 }
+
+###
+
+POST http://localhost:5087/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "stefan.auth@test.com",
+  "password": "Password123!"
+}
+
+###
+
+POST http://localhost:5087/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "stefan.auth@test.com",
+  "password": "Password123!"
+}
+
+###
+
+GET http://localhost:5087/api/portfolios/user/cccccccc-cccc-cccc-cccc-cccccccccccc
+
+###
+
+
+GET http://localhost:5087/api/portfolios/user/cccccccc-cccc-cccc-cccc-cccccccccccc
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0NjRiMjNiNC1jOTRiLTRlNWUtYjFjNC0wZjIzNjI0MjQ2MzUiLCJlbWFpbCI6InN0ZWZhbi5hdXRoQHRlc3QuY29tIiwianRpIjoiMTEzZmNmMWYtYzdlNS00ZmQ3LTlhMjctNWY5YzZiNTJiZjA4IiwiZXhwIjoxNzkwOTY3MTM4LCJpc3MiOiJFbmVyZ3lUcmFkZSIsImF1ZCI6IkVuZXJneVRyYWRlIn0._x_zzaK9tTS0ASN8J8f8SQRiyYXfYLp0YDWDJkE0bQo
+
+###
+
+GET http://localhost:5087/api/portfolios/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0NjRiMjNiNC1jOTRiLTRlNWUtYjFjNC0wZjIzNjI0MjQ2MzUiLCJlbWFpbCI6InN0ZWZhbi5hdXRoQHRlc3QuY29tIiwianRpIjoiMjk4ZGY1ZjUtNmI3Yy00OTRhLWE3ZTgtZDY2NGRlNTgwNDc5IiwiZXhwIjoxNzkwOTY5MjkwLCJpc3MiOiJFbmVyZ3lUcmFkZSIsImF1ZCI6IkVuZXJneVRyYWRlIn0.7e4RbiqpeApLY_0dCO0u3tnqLUB_r9BlehyZtmlMFbc
+
+###
+
+POST http://localhost:5087/api/portfolios
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0NjRiMjNiNC1jOTRiLTRlNWUtYjFjNC0wZjIzNjI0MjQ2MzUiLCJlbWFpbCI6InN0ZWZhbi5hdXRoQHRlc3QuY29tIiwianRpIjoiMjk4ZGY1ZjUtNmI3Yy00OTRhLWE3ZTgtZDY2NGRlNTgwNDc5IiwiZXhwIjoxNzkwOTY5MjkwLCJpc3MiOiJFbmVyZ3lUcmFkZSIsImF1ZCI6IkVuZXJneVRyYWRlIn0.7e4RbiqpeApLY_0dCO0u3tnqLUB_r9BlehyZtmlMFbc
+Content-Type: application/json
+
+{
+  "name": "Main Portfolio",
+  "baseCurrency": 1
+}
+
+###
+
+GET http://localhost:5087/api/portfolios/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0NjRiMjNiNC1jOTRiLTRlNWUtYjFjNC0wZjIzNjI0MjQ2MzUiLCJlbWFpbCI6InN0ZWZhbi5hdXRoQHRlc3QuY29tIiwianRpIjoiMjk4ZGY1ZjUtNmI3Yy00OTRhLWE3ZTgtZDY2NGRlNTgwNDc5IiwiZXhwIjoxNzkwOTY5MjkwLCJpc3MiOiJFbmVyZ3lUcmFkZSIsImF1ZCI6IkVuZXJneVRyYWRlIn0.7e4RbiqpeApLY_0dCO0u3tnqLUB_r9BlehyZtmlMFbc
+
+###
+
+POST http://localhost:5087/api/orders
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0NjRiMjNiNC1jOTRiLTRlNWUtYjFjNC0wZjIzNjI0MjQ2MzUiLCJlbWFpbCI6InN0ZWZhbi5hdXRoQHRlc3QuY29tIiwianRpIjoiMjk4ZGY1ZjUtNmI3Yy00OTRhLWE3ZTgtZDY2NGRlNTgwNDc5IiwiZXhwIjoxNzkwOTY5MjkwLCJpc3MiOiJFbmVyZ3lUcmFkZSIsImF1ZCI6IkVuZXJneVRyYWRlIn0.7e4RbiqpeApLY_0dCO0u3tnqLUB_r9BlehyZtmlMFbc
+Content-Type: application/json
+Idempotency-Key: order-auth-test-001
+
+{
+  "portfolioId": "454c57b2-90b1-4ae7-9a1a-acff9bdebfaa",
+  "energyType": 1,
+  "quantityMWh": 100,
+  "maxPricePerMWh": 85,
+  "currency": 1,
+  "deliveryStart": "2026-10-10T00:00:00Z",
+  "deliveryEnd": "2026-10-20T00:00:00Z"
+}
+
+###
+
+###
+
+POST http://localhost:5087/api/orders
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0NjRiMjNiNC1jOTRiLTRlNWUtYjFjNC0wZjIzNjI0MjQ2MzUiLCJlbWFpbCI6InN0ZWZhbi5hdXRoQHRlc3QuY29tIiwianRpIjoiMjk4ZGY1ZjUtNmI3Yy00OTRhLWE3ZTgtZDY2NGRlNTgwNDc5IiwiZXhwIjoxNzkwOTY5MjkwLCJpc3MiOiJFbmVyZ3lUcmFkZSIsImF1ZCI6IkVuZXJneVRyYWRlIn0.7e4RbiqpeApLY_0dCO0u3tnqLUB_r9BlehyZtmlMFbc
+Content-Type: application/json
+Idempotency-Key: order-auth-test-001
+
+{
+  "portfolioId": "454c57b2-90b1-4ae7-9a1a-acff9bdebfaa",
+  "energyType": 1,
+  "quantityMWh": 100,
+  "maxPricePerMWh": 85,
+  "currency": 1,
+  "deliveryStart": "2026-10-10T00:00:00Z",
+  "deliveryEnd": "2026-10-20T00:00:00Z"
+}
+
+###
+
+POST http://localhost:5087/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "second.user@test.com",
+  "password": "Password123!"
+}
+
+###
+
+POST http://localhost:5087/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "second.user@test.com",
+  "password": "Password123!"
+}
+
+###
+
+POST http://localhost:5087/api/portfolios
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NzNmNjVmMi04YzMwLTRmMDItOWMwYS0wMTI3ZjNhNDRiNmIiLCJlbWFpbCI6InNlY29uZC51c2VyQHRlc3QuY29tIiwianRpIjoiMDVjODY0ZWMtODA4OS00YTkzLWIyMzItOTZkZjMyZjE1MWI4IiwiZXhwIjoxNzkwOTcxNDk2LCJpc3MiOiJFbmVyZ3lUcmFkZSIsImF1ZCI6IkVuZXJneVRyYWRlIn0.YrepOKKY2VqXHClKKEyAMZu37aZalmkwT-yV6gKLEDU
+Content-Type: application/json
+
+{
+  "name": "Second User Portfolio",
+  "baseCurrency": 1
+}
+
+###
+
+POST http://localhost:5087/api/orders
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0NjRiMjNiNC1jOTRiLTRlNWUtYjFjNC0wZjIzNjI0MjQ2MzUiLCJlbWFpbCI6InN0ZWZhbi5hdXRoQHRlc3QuY29tIiwianRpIjoiMjk4ZGY1ZjUtNmI3Yy00OTRhLWE3ZTgtZDY2NGRlNTgwNDc5IiwiZXhwIjoxNzkwOTY5MjkwLCJpc3MiOiJFbmVyZ3lUcmFkZSIsImF1ZCI6IkVuZXJneVRyYWRlIn0.7e4RbiqpeApLY_0dCO0u3tnqLUB_r9BlehyZtmlMFbc
+Content-Type: application/json
+Idempotency-Key: order-negative-test-001
+
+{
+  "portfolioId": "aee89a60-801e-447b-b7fc-23c035921e77",
+  "energyType": 1,
+  "quantityMWh": 100,
+  "maxPricePerMWh": 85,
+  "currency": 1,
+  "deliveryStart": "2026-10-10T00:00:00Z",
+  "deliveryEnd": "2026-10-20T00:00:00Z"
+}
+
+###
+
+POST http://localhost:5087/api/energy-offers
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0NjRiMjNiNC1jOTRiLTRlNWUtYjFjNC0wZjIzNjI0MjQ2MzUiLCJlbWFpbCI6InN0ZWZhbi5hdXRoQHRlc3QuY29tIiwianRpIjoiY2MzM2M3ZWUtM2ZlYS00MzIxLTkwZTktNmY4Y2M0ZDZhOTVmIiwiZXhwIjoxNzkwOTc0Nzg0LCJpc3MiOiJFbmVyZ3lUcmFkZSIsImF1ZCI6IkVuZXJneVRyYWRlIn0.r7_7ysk6Aiy1rCMl6SHXNzmZfdhXNmToUeO3urgtCtg
+Content-Type: application/json
+Idempotency-Key: offer-auth-test-001
+
+{
+  "portfolioId": "454c57b2-90b1-4ae7-9a1a-acff9bdebfaa",
+  "energyType": 1,
+  "quantityMWh": 200,
+  "pricePerMWh": 80,
+  "currency": 1,
+  "deliveryStart": "2026-10-10T00:00:00Z",
+  "deliveryEnd": "2026-10-20T00:00:00Z"
+}
+
+###
+
+POST http://localhost:5087/api/energy-offers
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0NjRiMjNiNC1jOTRiLTRlNWUtYjFjNC0wZjIzNjI0MjQ2MzUiLCJlbWFpbCI6InN0ZWZhbi5hdXRoQHRlc3QuY29tIiwianRpIjoiZThkZjY4YmYtY2JjNi00NmQ1LWE2OWMtMDkwZTNiMWE1YTkxIiwiZXhwIjoxNzkwOTc1MjI2LCJpc3MiOiJFbmVyZ3lUcmFkZSIsImF1ZCI6IkVuZXJneVRyYWRlIn0.sT5UwfIMqxPU4zhUKUtOuMb26fKCrlyvgC8-PId94DE
+
+{
+  "portfolioId": "aee89a60-801e-447b-b7fc-23c035921e77",
+  "energyType": 1,
+  "quantityMWh": 100,
+  "pricePerMWh": 80,
+  "currency": 1,
+  "deliveryStart": "2026-10-10T00:00:00Z",
+  "deliveryEnd": "2026-10-20T00:00:00Z"
+}

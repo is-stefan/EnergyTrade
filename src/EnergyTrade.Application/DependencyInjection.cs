@@ -5,7 +5,6 @@ using EnergyTrade.Application.EnergyOffers.GetAll;
 using EnergyTrade.Application.EnergyOffers.Cancel;
 using EnergyTrade.Application.EnergyOffers.Close;
 using EnergyTrade.Application.EnergyOffers.Update;
-using EnergyTrade.Application.Trades.Create;
 using EnergyTrade.Application.Trades.GetById;
 using EnergyTrade.Application.Trades.GetAll;
 using EnergyTrade.Application.Orders.Create;
@@ -21,6 +20,8 @@ using EnergyTrade.Application.Portfolios.GetByUser;
 using EnergyTrade.Application.Portfolios.Rename;
 using EnergyTrade.Application.Portfolios.Close;
 using EnergyTrade.Application.Idempotency;
+using EnergyTrade.Application.Auth.Register;
+using EnergyTrade.Application.Auth.Login;
 
 namespace EnergyTrade.Application;
 
@@ -35,24 +36,31 @@ public static class DependencyInjection
         services.AddScoped<CancelEnergyOfferService>();
         services.AddScoped<CloseEnergyOfferService>();
         services.AddScoped<UpdateEnergyOfferService>();
-        services.AddScoped<CreateTradeService>();
+
         services.AddScoped<GetTradeByIdService>();
         services.AddScoped<GetTradesService>();
+
         services.AddScoped<CreateOrderService>();
         services.AddScoped<GetOrderByIdService>();
         services.AddScoped<GetOrdersService>();
         services.AddScoped<CancelOrderService>();
         services.AddScoped<MatchOrderService>();
+
         services.AddScoped<ApplyTradeToPositionsService>();
         services.AddScoped<GetPositionsByPortfolioService>();
+
         services.AddScoped<CreatePortfolioService>();
         services.AddScoped<GetPortfolioByIdService>();
         services.AddScoped<GetPortfoliosByUserService>();
         services.AddScoped<RenamePortfolioService>();
         services.AddScoped<ClosePortfolioService>();
+
         services.AddScoped<IdempotencyService>();
         services.AddScoped<IdempotentCreateOrderService>();
         services.AddScoped<IdempotentCreateEnergyOfferService>();
+
+        services.AddScoped<RegisterService>();
+        services.AddScoped<LoginService>();
 
         return services;
     }

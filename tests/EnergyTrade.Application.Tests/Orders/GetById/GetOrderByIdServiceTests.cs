@@ -1,4 +1,5 @@
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.Orders.GetById;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
@@ -8,7 +9,7 @@ namespace EnergyTrade.Application.Tests.Orders.GetById;
 public class GetOrderByIdServiceTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenOrderExists_ReturnsOrder()
+    public async Task ExecuteAsync_WhenOrderExistsAndBelongsToUser_ReturnsOrder()
     {
         // Arrange
         var order = CreateOrder();
@@ -17,7 +18,9 @@ public class GetOrderByIdServiceTests
         var service = new GetOrderByIdService(repository);
 
         // Act
-        var result = await service.ExecuteAsync(order.Id);
+        var result = await service.ExecuteAsync(
+            order.BuyerId,
+            order.Id);
 
         // Assert
         Assert.NotNull(result);
@@ -43,10 +46,35 @@ public class GetOrderByIdServiceTests
         var service = new GetOrderByIdService(repository);
 
         // Act
-        var result = await service.ExecuteAsync(Guid.NewGuid());
+        var result = await service.ExecuteAsync(
+            Guid.NewGuid(),
+            Guid.NewGuid());
 
         // Assert
         Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenOrderBelongsToAnotherUser_ThrowsForbiddenException()
+    {
+        // Arrange
+        var order = CreateOrder();
+
+        var repository = new FakeOrderRepository(order);
+        var service = new GetOrderByIdService(repository);
+
+        var anotherUserId = Guid.NewGuid();
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ForbiddenException>(
+            () => service.ExecuteAsync(
+                anotherUserId,
+                order.Id));
+
+        // Assert
+        Assert.Equal(
+            "The order does not belong to the authenticated user.",
+            exception.Message);
     }
 
     private static Order CreateOrder()
@@ -120,6 +148,5 @@ public class GetOrderByIdServiceTests
         {
             return Task.CompletedTask;
         }
-
     }
 }

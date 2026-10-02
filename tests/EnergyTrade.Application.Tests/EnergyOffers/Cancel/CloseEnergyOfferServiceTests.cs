@@ -1,4 +1,5 @@
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.EnergyOffers.Close;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
@@ -8,7 +9,7 @@ namespace EnergyTrade.Application.Tests.EnergyOffers.Close;
 public class CloseEnergyOfferServiceTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenOfferExists_ClosesOfferAndSavesChanges()
+    public async Task ExecuteAsync_WhenOfferExistsAndBelongsToUser_ClosesOfferAndSavesChanges()
     {
         // Arrange
         var offer = CreateValidOffer();
@@ -16,7 +17,9 @@ public class CloseEnergyOfferServiceTests
         var service = new CloseEnergyOfferService(repository);
 
         // Act
-        var result = await service.ExecuteAsync(offer.Id);
+        var result = await service.ExecuteAsync(
+            offer.SellerId,
+            offer.Id);
 
         // Assert
         Assert.True(result);
@@ -33,10 +36,36 @@ public class CloseEnergyOfferServiceTests
         var service = new CloseEnergyOfferService(repository);
 
         // Act
-        var result = await service.ExecuteAsync(Guid.NewGuid());
+        var result = await service.ExecuteAsync(
+            Guid.NewGuid(),
+            Guid.NewGuid());
 
         // Assert
         Assert.False(result);
+        Assert.Equal(0, repository.SaveChangesCallCount);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenOfferBelongsToAnotherUser_ThrowsForbiddenException()
+    {
+        // Arrange
+        var offer = CreateValidOffer();
+        var repository = new FakeEnergyOfferRepository(offer);
+        var service = new CloseEnergyOfferService(repository);
+
+        var anotherUserId = Guid.NewGuid();
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ForbiddenException>(
+            () => service.ExecuteAsync(
+                anotherUserId,
+                offer.Id));
+
+        // Assert
+        Assert.Equal(
+            "The energy offer does not belong to the authenticated user.",
+            exception.Message);
+
         Assert.Equal(0, repository.SaveChangesCallCount);
     }
 
@@ -52,7 +81,9 @@ public class CloseEnergyOfferServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.ExecuteAsync(offer.Id));
+            () => service.ExecuteAsync(
+                offer.SellerId,
+                offer.Id));
 
         Assert.Equal(0, repository.SaveChangesCallCount);
     }
@@ -105,6 +136,7 @@ public class CloseEnergyOfferServiceTests
         }
 
         public Task<IReadOnlyList<EnergyOffer>> GetAllAsync(
+            Guid? sellerId = null,
             OfferStatus? status = null,
             EnergyType? energyType = null,
             int page = 1,
@@ -116,6 +148,7 @@ public class CloseEnergyOfferServiceTests
         }
 
         public Task<int> CountAsync(
+            Guid? sellerId = null,
             OfferStatus? status = null,
             EnergyType? energyType = null,
             CancellationToken cancellationToken = default)
@@ -142,6 +175,5 @@ public class CloseEnergyOfferServiceTests
         {
             return Task.FromResult<EnergyOffer?>(null);
         }
-
     }
 }

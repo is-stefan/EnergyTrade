@@ -1,9 +1,9 @@
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.Orders.Match;
 using EnergyTrade.Application.Positions.ApplyTrade;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
-using EnergyTrade.Application.Common.Exceptions;
 
 namespace EnergyTrade.Application.Tests.Orders.Match;
 
@@ -34,7 +34,9 @@ public class MatchOrderServiceTests
             transactionManager);
 
         // Act
-        var result = await service.ExecuteAsync(order.Id);
+        var result = await service.ExecuteAsync(
+            order.BuyerId,
+            order.Id);
 
         // Assert
         Assert.NotNull(result);
@@ -82,10 +84,52 @@ public class MatchOrderServiceTests
             transactionManager);
 
         // Act
-        var result = await service.ExecuteAsync(Guid.NewGuid());
+        var result = await service.ExecuteAsync(
+            Guid.NewGuid(),
+            Guid.NewGuid());
 
         // Assert
         Assert.Null(result);
+        Assert.Equal(0, tradeRepository.AddCallCount);
+        Assert.Empty(positionRepository.Positions);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenOrderBelongsToAnotherUser_ThrowsForbiddenException()
+    {
+        // Arrange
+        var order = CreateOrder();
+
+        var orderRepository = new FakeOrderRepository(order);
+        var energyOfferRepository = new FakeEnergyOfferRepository(null);
+        var tradeRepository = new FakeTradeRepository();
+        var positionRepository = new FakePositionRepository();
+
+        var applyTradeToPositionsService =
+            new ApplyTradeToPositionsService(positionRepository);
+
+        var transactionManager = new FakeTransactionManager();
+
+        var service = new MatchOrderService(
+            orderRepository,
+            energyOfferRepository,
+            tradeRepository,
+            applyTradeToPositionsService,
+            transactionManager);
+
+        var anotherUserId = Guid.NewGuid();
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ForbiddenException>(
+            () => service.ExecuteAsync(
+                anotherUserId,
+                order.Id));
+
+        // Assert
+        Assert.Equal(
+            "The order does not belong to the authenticated user.",
+            exception.Message);
+
         Assert.Equal(0, tradeRepository.AddCallCount);
         Assert.Empty(positionRepository.Positions);
     }
@@ -114,7 +158,9 @@ public class MatchOrderServiceTests
             transactionManager);
 
         // Act
-        var result = await service.ExecuteAsync(order.Id);
+        var result = await service.ExecuteAsync(
+            order.BuyerId,
+            order.Id);
 
         // Assert
         Assert.NotNull(result);
@@ -155,11 +201,47 @@ public class MatchOrderServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.ExecuteAsync(order.Id));
+            () => service.ExecuteAsync(
+                order.BuyerId,
+                order.Id));
 
         Assert.Equal(0, tradeRepository.AddCallCount);
         Assert.Empty(positionRepository.Positions);
         Assert.Equal(1, transactionManager.ExecuteCallCount);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenConcurrencyConflictOccurs_ReturnsNotMatched()
+    {
+        // Arrange
+        var orderRepository = new FakeOrderRepository(null);
+        var energyOfferRepository = new FakeEnergyOfferRepository(null);
+        var tradeRepository = new FakeTradeRepository();
+        var positionRepository = new FakePositionRepository();
+
+        var applyTradeToPositionsService =
+            new ApplyTradeToPositionsService(positionRepository);
+
+        var transactionManager =
+            new ThrowingTransactionManager();
+
+        var service = new MatchOrderService(
+            orderRepository,
+            energyOfferRepository,
+            tradeRepository,
+            applyTradeToPositionsService,
+            transactionManager);
+
+        // Act
+        var result = await service.ExecuteAsync(
+            Guid.NewGuid(),
+            Guid.NewGuid());
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Matched);
+        Assert.Null(result.TradeId);
+        Assert.Null(result.EnergyOfferId);
     }
 
     private static Order CreateOrder()
@@ -276,6 +358,7 @@ public class MatchOrderServiceTests
         }
 
         public Task<IReadOnlyList<EnergyOffer>> GetAllAsync(
+            Guid? sellerId = null,
             OfferStatus? status = null,
             EnergyType? energyType = null,
             int page = 1,
@@ -287,6 +370,7 @@ public class MatchOrderServiceTests
         }
 
         public Task<int> CountAsync(
+            Guid? sellerId = null,
             OfferStatus? status = null,
             EnergyType? energyType = null,
             CancellationToken cancellationToken = default)
@@ -339,8 +423,7 @@ public class MatchOrderServiceTests
         }
 
         public Task<IReadOnlyList<Trade>> GetAllAsync(
-            Guid? sellerId = null,
-            Guid? buyerId = null,
+            Guid? participantId = null,
             EnergyType? energyType = null,
             int page = 1,
             int pageSize = 10,
@@ -351,8 +434,7 @@ public class MatchOrderServiceTests
         }
 
         public Task<int> CountAsync(
-            Guid? sellerId = null,
-            Guid? buyerId = null,
+            Guid? participantId = null,
             EnergyType? energyType = null,
             CancellationToken cancellationToken = default)
         {
@@ -402,40 +484,8 @@ public class MatchOrderServiceTests
         {
             return Task.CompletedTask;
         }
-
     }
 
-    [Fact]
-    public async Task ExecuteAsync_WhenConcurrencyConflictOccurs_ReturnsNotMatched()
-    {
-        // Arrange
-        var orderRepository = new FakeOrderRepository(null);
-        var energyOfferRepository = new FakeEnergyOfferRepository(null);
-        var tradeRepository = new FakeTradeRepository();
-        var positionRepository = new FakePositionRepository();
-
-        var applyTradeToPositionsService =
-            new ApplyTradeToPositionsService(positionRepository);
-
-        var transactionManager =
-            new ThrowingTransactionManager();
-
-        var service = new MatchOrderService(
-            orderRepository,
-            energyOfferRepository,
-            tradeRepository,
-            applyTradeToPositionsService,
-            transactionManager);
-
-        // Act
-        var result = await service.ExecuteAsync(Guid.NewGuid());
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.False(result.Matched);
-        Assert.Null(result.TradeId);
-        Assert.Null(result.EnergyOfferId);
-    }
     private sealed class FakeTransactionManager
         : ITransactionManager
     {
@@ -462,5 +512,4 @@ public class MatchOrderServiceTests
                 "Simulated concurrency conflict.");
         }
     }
-
 }

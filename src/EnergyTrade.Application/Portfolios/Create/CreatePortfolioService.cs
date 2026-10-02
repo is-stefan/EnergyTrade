@@ -14,11 +14,12 @@ public sealed class CreatePortfolioService
     }
 
     public async Task<CreatePortfolioResult> ExecuteAsync(
+        Guid userId,
         CreatePortfolioRequest request,
         CancellationToken cancellationToken = default)
     {
         var portfolio = new Portfolio(
-            request.UserId,
+            userId,
             request.Name,
             request.BaseCurrency);
 

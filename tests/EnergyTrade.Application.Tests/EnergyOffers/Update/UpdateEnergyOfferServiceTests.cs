@@ -1,4 +1,5 @@
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.EnergyOffers.Update;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
@@ -8,7 +9,7 @@ namespace EnergyTrade.Application.Tests.EnergyOffers.Update;
 public class UpdateEnergyOfferServiceTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenOfferExists_UpdatesOfferAndSavesChanges()
+    public async Task ExecuteAsync_WhenOfferExistsAndBelongsToUser_UpdatesOfferAndSavesChanges()
     {
         // Arrange
         var offer = CreateValidOffer();
@@ -28,6 +29,7 @@ public class UpdateEnergyOfferServiceTests
 
         // Act
         var result = await service.ExecuteAsync(
+            offer.SellerId,
             offer.Id,
             request);
 
@@ -57,10 +59,37 @@ public class UpdateEnergyOfferServiceTests
         // Act
         var result = await service.ExecuteAsync(
             Guid.NewGuid(),
+            Guid.NewGuid(),
             request);
 
         // Assert
         Assert.False(result);
+        Assert.Equal(0, repository.SaveChangesCallCount);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenOfferBelongsToAnotherUser_ThrowsForbiddenException()
+    {
+        // Arrange
+        var offer = CreateValidOffer();
+        var repository = new FakeEnergyOfferRepository(offer);
+        var service = new UpdateEnergyOfferService(repository);
+
+        var request = CreateValidRequest();
+        var anotherUserId = Guid.NewGuid();
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ForbiddenException>(
+            () => service.ExecuteAsync(
+                anotherUserId,
+                offer.Id,
+                request));
+
+        // Assert
+        Assert.Equal(
+            "The energy offer does not belong to the authenticated user.",
+            exception.Message);
+
         Assert.Equal(0, repository.SaveChangesCallCount);
     }
 
@@ -83,6 +112,7 @@ public class UpdateEnergyOfferServiceTests
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
             () => service.ExecuteAsync(
+                offer.SellerId,
                 offer.Id,
                 request));
 
@@ -104,6 +134,7 @@ public class UpdateEnergyOfferServiceTests
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => service.ExecuteAsync(
+                offer.SellerId,
                 offer.Id,
                 request));
 
@@ -172,6 +203,7 @@ public class UpdateEnergyOfferServiceTests
         }
 
         public Task<IReadOnlyList<EnergyOffer>> GetAllAsync(
+            Guid? sellerId = null,
             OfferStatus? status = null,
             EnergyType? energyType = null,
             int page = 1,
@@ -183,6 +215,7 @@ public class UpdateEnergyOfferServiceTests
         }
 
         public Task<int> CountAsync(
+            Guid? sellerId = null,
             OfferStatus? status = null,
             EnergyType? energyType = null,
             CancellationToken cancellationToken = default)
@@ -209,6 +242,5 @@ public class UpdateEnergyOfferServiceTests
         {
             return Task.FromResult<EnergyOffer?>(null);
         }
-
     }
 }

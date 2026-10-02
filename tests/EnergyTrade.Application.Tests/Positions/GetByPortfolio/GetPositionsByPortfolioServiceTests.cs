@@ -1,4 +1,5 @@
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.Positions.GetByPortfolio;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
@@ -8,32 +9,45 @@ namespace EnergyTrade.Application.Tests.Positions.GetByPortfolio;
 public class GetPositionsByPortfolioServiceTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenPositionsExist_ReturnsPortfolioPositions()
+    public async Task ExecuteAsync_WhenPositionsExistAndPortfolioBelongsToUser_ReturnsPortfolioPositions()
     {
         // Arrange
-        var portfolioId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+
+        var portfolio = new Portfolio(
+            userId,
+            "Trading Portfolio",
+            Currency.EUR);
 
         var solarPosition = new Position(
-            portfolioId,
+            portfolio.Id,
             EnergyType.Solar);
 
         solarPosition.ApplyTrade(100m);
 
         var windPosition = new Position(
-            portfolioId,
+            portfolio.Id,
             EnergyType.Wind);
 
         windPosition.ApplyTrade(-50m);
 
-        var repository = new FakePositionRepository(
+        var positionRepository = new FakePositionRepository(
             [solarPosition, windPosition]);
 
-        var service = new GetPositionsByPortfolioService(repository);
+        var portfolioRepository = new FakePortfolioRepository(
+            portfolio);
+
+        var service = new GetPositionsByPortfolioService(
+            positionRepository,
+            portfolioRepository);
 
         // Act
-        var result = await service.ExecuteAsync(portfolioId);
+        var result = await service.ExecuteAsync(
+            userId,
+            portfolio.Id);
 
         // Assert
+        Assert.NotNull(result);
         Assert.Equal(2, result.Count);
 
         Assert.Contains(
@@ -50,18 +64,88 @@ public class GetPositionsByPortfolioServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenNoPositionsExist_ReturnsEmptyList()
+    public async Task ExecuteAsync_WhenPortfolioHasNoPositions_ReturnsEmptyList()
     {
         // Arrange
-        var repository = new FakePositionRepository([]);
+        var userId = Guid.NewGuid();
 
-        var service = new GetPositionsByPortfolioService(repository);
+        var portfolio = new Portfolio(
+            userId,
+            "Trading Portfolio",
+            Currency.EUR);
+
+        var positionRepository = new FakePositionRepository([]);
+
+        var portfolioRepository = new FakePortfolioRepository(
+            portfolio);
+
+        var service = new GetPositionsByPortfolioService(
+            positionRepository,
+            portfolioRepository);
 
         // Act
-        var result = await service.ExecuteAsync(Guid.NewGuid());
+        var result = await service.ExecuteAsync(
+            userId,
+            portfolio.Id);
 
         // Assert
+        Assert.NotNull(result);
         Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenPortfolioDoesNotExist_ReturnsNull()
+    {
+        // Arrange
+        var positionRepository = new FakePositionRepository([]);
+
+        var portfolioRepository = new FakePortfolioRepository(
+            null);
+
+        var service = new GetPositionsByPortfolioService(
+            positionRepository,
+            portfolioRepository);
+
+        // Act
+        var result = await service.ExecuteAsync(
+            Guid.NewGuid(),
+            Guid.NewGuid());
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenPortfolioBelongsToAnotherUser_ThrowsForbiddenException()
+    {
+        // Arrange
+        var ownerId = Guid.NewGuid();
+        var anotherUserId = Guid.NewGuid();
+
+        var portfolio = new Portfolio(
+            ownerId,
+            "Trading Portfolio",
+            Currency.EUR);
+
+        var positionRepository = new FakePositionRepository([]);
+
+        var portfolioRepository = new FakePortfolioRepository(
+            portfolio);
+
+        var service = new GetPositionsByPortfolioService(
+            positionRepository,
+            portfolioRepository);
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ForbiddenException>(
+            () => service.ExecuteAsync(
+                anotherUserId,
+                portfolio.Id));
+
+        // Assert
+        Assert.Equal(
+            "The portfolio does not belong to the authenticated user.",
+            exception.Message);
     }
 
     private sealed class FakePositionRepository
@@ -105,6 +189,57 @@ public class GetPositionsByPortfolioServiceTests
             _positions.Add(position);
 
             return Task.CompletedTask;
+        }
+
+        public Task SaveChangesAsync(
+            CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakePortfolioRepository
+        : IPortfolioRepository
+    {
+        private readonly Portfolio? _portfolio;
+
+        public FakePortfolioRepository(
+            Portfolio? portfolio)
+        {
+            _portfolio = portfolio;
+        }
+
+        public Task AddAsync(
+            Portfolio portfolio,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task<Portfolio?> GetByIdAsync(
+            Guid id,
+            CancellationToken cancellationToken = default)
+        {
+            if (_portfolio?.Id == id)
+            {
+                return Task.FromResult<Portfolio?>(_portfolio);
+            }
+
+            return Task.FromResult<Portfolio?>(null);
+        }
+
+        public Task<IReadOnlyList<Portfolio>> GetByUserIdAsync(
+            Guid userId,
+            CancellationToken cancellationToken = default)
+        {
+            if (_portfolio?.UserId == userId)
+            {
+                return Task.FromResult<IReadOnlyList<Portfolio>>(
+                    [_portfolio]);
+            }
+
+            return Task.FromResult<IReadOnlyList<Portfolio>>(
+                Array.Empty<Portfolio>());
         }
 
         public Task SaveChangesAsync(

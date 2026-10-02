@@ -64,7 +64,6 @@ public class ConcurrentCreateEnergyOfferIdempotencyTests
             deliveryStart.AddDays(30);
 
         var request = new CreateEnergyOfferRequest(
-            sellerId,
             portfolio.Id,
             EnergyType.Solar,
             100m,
@@ -75,6 +74,9 @@ public class ConcurrentCreateEnergyOfferIdempotencyTests
 
         var idempotencyKey =
             $"create-energy-offer-{Guid.NewGuid()}";
+
+        var scopedKey =
+            $"{sellerId}:{idempotencyKey}";
 
         // Save portfolio required by CreateEnergyOfferService
         await using (var setupScope =
@@ -106,12 +108,14 @@ public class ConcurrentCreateEnergyOfferIdempotencyTests
                 scope2.ServiceProvider
                     .GetRequiredService<IdempotentCreateEnergyOfferService>();
 
-            // Act - same key, same operation, concurrently
+            // Act - same user, same key, same operation, concurrently
             var results = await Task.WhenAll(
                 service1.ExecuteAsync(
+                    sellerId,
                     idempotencyKey,
                     request),
                 service2.ExecuteAsync(
+                    sellerId,
                     idempotencyKey,
                     request));
 
@@ -144,7 +148,7 @@ public class ConcurrentCreateEnergyOfferIdempotencyTests
             var idempotencyRecords =
                 await verificationContext.IdempotencyRecords
                     .Where(x =>
-                        x.Key == idempotencyKey &&
+                        x.Key == scopedKey &&
                         x.Operation == "CreateEnergyOffer")
                     .ToListAsync();
 
@@ -167,7 +171,7 @@ public class ConcurrentCreateEnergyOfferIdempotencyTests
             var idempotencyRecords =
                 await cleanupContext.IdempotencyRecords
                     .Where(x =>
-                        x.Key == idempotencyKey &&
+                        x.Key == scopedKey &&
                         x.Operation == "CreateEnergyOffer")
                     .ToListAsync();
 

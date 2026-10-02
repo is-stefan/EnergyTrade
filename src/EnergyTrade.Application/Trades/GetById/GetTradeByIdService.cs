@@ -1,4 +1,5 @@
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Common.Exceptions;
 
 namespace EnergyTrade.Application.Trades.GetById;
 
@@ -13,6 +14,7 @@ public sealed class GetTradeByIdService
     }
 
     public async Task<GetTradeByIdResult?> ExecuteAsync(
+        Guid userId,
         Guid id,
         CancellationToken cancellationToken = default)
     {
@@ -23,6 +25,13 @@ public sealed class GetTradeByIdService
         if (trade is null)
         {
             return null;
+        }
+
+        if (trade.SellerId != userId &&
+            trade.BuyerId != userId)
+        {
+            throw new ForbiddenException(
+                "The trade does not belong to the authenticated user.");
         }
 
         return new GetTradeByIdResult(

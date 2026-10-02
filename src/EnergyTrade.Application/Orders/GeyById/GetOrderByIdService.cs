@@ -1,4 +1,5 @@
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Common.Exceptions;
 
 namespace EnergyTrade.Application.Orders.GetById;
 
@@ -13,6 +14,7 @@ public sealed class GetOrderByIdService
     }
 
     public async Task<GetOrderByIdResult?> ExecuteAsync(
+        Guid userId,
         Guid id,
         CancellationToken cancellationToken = default)
     {
@@ -23,6 +25,12 @@ public sealed class GetOrderByIdService
         if (order is null)
         {
             return null;
+        }
+
+        if (order.BuyerId != userId)
+        {
+            throw new ForbiddenException(
+                "The order does not belong to the authenticated user.");
         }
 
         return new GetOrderByIdResult(

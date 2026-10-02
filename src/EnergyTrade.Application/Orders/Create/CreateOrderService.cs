@@ -1,13 +1,13 @@
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
+using EnergyTrade.Application.Common.Exceptions;
 
 namespace EnergyTrade.Application.Orders.Create;
 
 public sealed class CreateOrderService
 {
     private readonly IOrderRepository _orderRepository;
-
     private readonly IPortfolioRepository _portfolioRepository;
 
     public CreateOrderService(
@@ -19,9 +19,16 @@ public sealed class CreateOrderService
     }
 
     public async Task<CreateOrderResult> ExecuteAsync(
+        Guid userId,
         CreateOrderRequest request,
         CancellationToken cancellationToken = default)
     {
+        if (userId == Guid.Empty)
+        {
+            throw new ArgumentException(
+                "User id cannot be empty.",
+                nameof(userId));
+        }
 
         var portfolio = await _portfolioRepository.GetByIdAsync(
             request.PortfolioId,
@@ -34,6 +41,12 @@ public sealed class CreateOrderService
                 nameof(request.PortfolioId));
         }
 
+        if (portfolio.UserId != userId)
+        {
+            throw new ForbiddenException(
+                "The portfolio does not belong to the authenticated user.");
+        }
+
         if (portfolio.Status != PortfolioStatus.Active)
         {
             throw new InvalidOperationException(
@@ -41,7 +54,7 @@ public sealed class CreateOrderService
         }
 
         var order = new Order(
-            request.BuyerId,
+            userId,
             request.PortfolioId,
             request.EnergyType,
             request.QuantityMWh,

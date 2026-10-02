@@ -14,16 +14,14 @@ public interface ITradeRepository
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Trade>> GetAllAsync(
-        Guid? sellerId = null,
-        Guid? buyerId = null,
+        Guid? participantId = null,
         EnergyType? energyType = null,
         int page = 1,
         int pageSize = 10,
         CancellationToken cancellationToken = default);
 
     Task<int> CountAsync(
-        Guid? sellerId = null,
-        Guid? buyerId = null,
+        Guid? participantId = null,
         EnergyType? energyType = null,
         CancellationToken cancellationToken = default);
 }

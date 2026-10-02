@@ -1,4 +1,5 @@
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.EnergyOffers.GetById;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
@@ -8,7 +9,7 @@ namespace EnergyTrade.Application.Tests.EnergyOffers.GetById;
 public class GetEnergyOfferByIdServiceTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenOfferExists_ReturnsOffer()
+    public async Task ExecuteAsync_WhenOfferExistsAndBelongsToUser_ReturnsOffer()
     {
         // Arrange
         var offer = CreateValidOffer();
@@ -16,7 +17,9 @@ public class GetEnergyOfferByIdServiceTests
         var service = new GetEnergyOfferByIdService(repository);
 
         // Act
-        var result = await service.ExecuteAsync(offer.Id);
+        var result = await service.ExecuteAsync(
+            offer.SellerId,
+            offer.Id);
 
         // Assert
         Assert.NotNull(result);
@@ -37,10 +40,34 @@ public class GetEnergyOfferByIdServiceTests
         var service = new GetEnergyOfferByIdService(repository);
 
         // Act
-        var result = await service.ExecuteAsync(Guid.NewGuid());
+        var result = await service.ExecuteAsync(
+            Guid.NewGuid(),
+            Guid.NewGuid());
 
         // Assert
         Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenOfferBelongsToAnotherUser_ThrowsForbiddenException()
+    {
+        // Arrange
+        var offer = CreateValidOffer();
+        var repository = new FakeEnergyOfferRepository(offer);
+        var service = new GetEnergyOfferByIdService(repository);
+
+        var anotherUserId = Guid.NewGuid();
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ForbiddenException>(
+            () => service.ExecuteAsync(
+                anotherUserId,
+                offer.Id));
+
+        // Assert
+        Assert.Equal(
+            "The energy offer does not belong to the authenticated user.",
+            exception.Message);
     }
 
     private static EnergyOffer CreateValidOffer()
@@ -89,6 +116,7 @@ public class GetEnergyOfferByIdServiceTests
         }
 
         public Task<IReadOnlyList<EnergyOffer>> GetAllAsync(
+            Guid? sellerId = null,
             OfferStatus? status = null,
             EnergyType? energyType = null,
             int page = 1,
@@ -100,6 +128,7 @@ public class GetEnergyOfferByIdServiceTests
         }
 
         public Task<int> CountAsync(
+            Guid? sellerId = null,
             OfferStatus? status = null,
             EnergyType? energyType = null,
             CancellationToken cancellationToken = default)
@@ -125,6 +154,5 @@ public class GetEnergyOfferByIdServiceTests
         {
             return Task.FromResult<EnergyOffer?>(null);
         }
-
     }
 }

@@ -26,15 +26,19 @@ public sealed class IdempotentCreateEnergyOfferService
     }
 
     public async Task<CreateEnergyOfferResult> ExecuteAsync(
+        Guid userId,
         string idempotencyKey,
         CreateEnergyOfferRequest request,
         CancellationToken cancellationToken = default)
     {
+        var scopedKey = $"{userId}:{idempotencyKey}";
+
         var existingResult =
             await _idempotencyService
-                .GetResultAsync<CreateEnergyOfferResult>(
-                    idempotencyKey,
+                .GetResultAsync<CreateEnergyOfferRequest, CreateEnergyOfferResult>(
+                    scopedKey,
                     Operation,
+                    request,
                     cancellationToken);
 
         if (existingResult is not null)
@@ -51,12 +55,14 @@ public sealed class IdempotentCreateEnergyOfferService
                 {
                     result =
                         await _createEnergyOfferService.ExecuteAsync(
+                            userId,
                             request,
                             transactionCancellationToken);
 
                     await _idempotencyService.SaveResultAsync(
-                        idempotencyKey,
+                        scopedKey,
                         Operation,
+                        request,
                         result,
                         201,
                         transactionCancellationToken);
@@ -67,7 +73,7 @@ public sealed class IdempotentCreateEnergyOfferService
         {
             var winningRecord =
                 await _idempotencyRepository.GetAsync(
-                    idempotencyKey,
+                    scopedKey,
                     Operation,
                     cancellationToken);
 
@@ -78,9 +84,10 @@ public sealed class IdempotentCreateEnergyOfferService
 
             var winningResult =
                 await _idempotencyService
-                    .GetResultAsync<CreateEnergyOfferResult>(
-                        idempotencyKey,
+                    .GetResultAsync<CreateEnergyOfferRequest, CreateEnergyOfferResult>(
+                        scopedKey,
                         Operation,
+                        request,
                         cancellationToken);
 
             if (winningResult is null)

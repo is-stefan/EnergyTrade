@@ -8,28 +8,37 @@ namespace EnergyTrade.Application.Tests.Trades.GetAll;
 public class GetTradesServiceTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenTradesExist_ReturnsPagedTrades()
+    public async Task ExecuteAsync_WhenTradesExist_ReturnsOnlyAuthenticatedUserTrades()
     {
         // Arrange
-        var firstTrade = CreateTrade(
-            Guid.NewGuid(),
-            Guid.NewGuid(),
+        var userId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
+
+        var sellerTrade = CreateTrade(
+            userId,
+            otherUserId,
             EnergyType.Solar,
             100m);
 
-        var secondTrade = CreateTrade(
-            Guid.NewGuid(),
-            Guid.NewGuid(),
+        var buyerTrade = CreateTrade(
+            otherUserId,
+            userId,
             EnergyType.Wind,
             200m);
 
+        var unrelatedTrade = CreateTrade(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            EnergyType.Solar,
+            300m);
+
         var repository = new FakeTradeRepository(
-            new[] { firstTrade, secondTrade });
+            new[] { sellerTrade, buyerTrade, unrelatedTrade });
 
         var service = new GetTradesService(repository);
 
         // Act
-        var result = await service.ExecuteAsync();
+        var result = await service.ExecuteAsync(userId);
 
         // Assert
         Assert.Equal(2, result.Items.Count);
@@ -37,24 +46,29 @@ public class GetTradesServiceTests
         Assert.Equal(10, result.PageSize);
         Assert.Equal(2, result.TotalCount);
 
-        Assert.Equal(firstTrade.Id, result.Items[0].Id);
-        Assert.Equal(secondTrade.Id, result.Items[1].Id);
+        Assert.Contains(
+            result.Items,
+            x => x.Id == sellerTrade.Id);
+
+        Assert.Contains(
+            result.Items,
+            x => x.Id == buyerTrade.Id);
     }
 
     [Fact]
     public async Task ExecuteAsync_WithPagination_ReturnsRequestedPage()
     {
         // Arrange
-        var sellerId = Guid.NewGuid();
-        var buyerId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
 
         var trades = new List<Trade>
         {
-            CreateTrade(sellerId, buyerId, EnergyType.Solar, 100m),
-            CreateTrade(sellerId, buyerId, EnergyType.Solar, 200m),
-            CreateTrade(sellerId, buyerId, EnergyType.Solar, 300m),
-            CreateTrade(sellerId, buyerId, EnergyType.Solar, 400m),
-            CreateTrade(sellerId, buyerId, EnergyType.Solar, 500m)
+            CreateTrade(userId, otherUserId, EnergyType.Solar, 100m),
+            CreateTrade(otherUserId, userId, EnergyType.Solar, 200m),
+            CreateTrade(userId, otherUserId, EnergyType.Solar, 300m),
+            CreateTrade(otherUserId, userId, EnergyType.Solar, 400m),
+            CreateTrade(userId, otherUserId, EnergyType.Solar, 500m)
         };
 
         var repository = new FakeTradeRepository(trades);
@@ -62,6 +76,7 @@ public class GetTradesServiceTests
 
         // Act
         var result = await service.ExecuteAsync(
+            userId,
             page: 2,
             pageSize: 2);
 
@@ -76,16 +91,67 @@ public class GetTradesServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithSellerFilter_ReturnsOnlySellerTrades()
+    public async Task ExecuteAsync_WhenUserIsSeller_ReturnsTrade()
     {
         // Arrange
-        var sellerId = Guid.NewGuid();
-        var otherSellerId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+
+        var trade = CreateTrade(
+            userId,
+            Guid.NewGuid(),
+            EnergyType.Solar,
+            100m);
+
+        var repository = new FakeTradeRepository(
+            new[] { trade });
+
+        var service = new GetTradesService(repository);
+
+        // Act
+        var result = await service.ExecuteAsync(userId);
+
+        // Assert
+        Assert.Single(result.Items);
+        Assert.Equal(userId, result.Items[0].SellerId);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenUserIsBuyer_ReturnsTrade()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+
+        var trade = CreateTrade(
+            Guid.NewGuid(),
+            userId,
+            EnergyType.Solar,
+            100m);
+
+        var repository = new FakeTradeRepository(
+            new[] { trade });
+
+        var service = new GetTradesService(repository);
+
+        // Act
+        var result = await service.ExecuteAsync(userId);
+
+        // Assert
+        Assert.Single(result.Items);
+        Assert.Equal(userId, result.Items[0].BuyerId);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithEnergyTypeFilter_ReturnsOnlyMatchingTrades()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
 
         var trades = new List<Trade>
         {
-            CreateTrade(sellerId, Guid.NewGuid(), EnergyType.Solar, 100m),
-            CreateTrade(otherSellerId, Guid.NewGuid(), EnergyType.Wind, 200m)
+            CreateTrade(userId, otherUserId, EnergyType.Solar, 100m),
+            CreateTrade(otherUserId, userId, EnergyType.Wind, 200m),
+            CreateTrade(Guid.NewGuid(), Guid.NewGuid(), EnergyType.Wind, 300m)
         };
 
         var repository = new FakeTradeRepository(trades);
@@ -93,12 +159,25 @@ public class GetTradesServiceTests
 
         // Act
         var result = await service.ExecuteAsync(
-            sellerId: sellerId);
+            userId,
+            energyType: EnergyType.Wind);
 
         // Assert
         Assert.Single(result.Items);
-        Assert.Equal(sellerId, result.Items[0].SellerId);
+        Assert.Equal(EnergyType.Wind, result.Items[0].EnergyType);
         Assert.Equal(1, result.TotalCount);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithEmptyUserId_ThrowsArgumentException()
+    {
+        var repository = new FakeTradeRepository(
+            Array.Empty<Trade>());
+
+        var service = new GetTradesService(repository);
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => service.ExecuteAsync(Guid.Empty));
     }
 
     [Fact]
@@ -110,7 +189,9 @@ public class GetTradesServiceTests
         var service = new GetTradesService(repository);
 
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => service.ExecuteAsync(page: 0));
+            () => service.ExecuteAsync(
+                Guid.NewGuid(),
+                page: 0));
     }
 
     [Fact]
@@ -122,7 +203,9 @@ public class GetTradesServiceTests
         var service = new GetTradesService(repository);
 
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => service.ExecuteAsync(pageSize: 101));
+            () => service.ExecuteAsync(
+                Guid.NewGuid(),
+                pageSize: 101));
     }
 
     private static Trade CreateTrade(
@@ -170,8 +253,7 @@ public class GetTradesServiceTests
         }
 
         public Task<IReadOnlyList<Trade>> GetAllAsync(
-            Guid? sellerId = null,
-            Guid? buyerId = null,
+            Guid? participantId = null,
             EnergyType? energyType = null,
             int page = 1,
             int pageSize = 10,
@@ -179,16 +261,12 @@ public class GetTradesServiceTests
         {
             var query = _trades.AsEnumerable();
 
-            if (sellerId.HasValue)
+            if (participantId.HasValue)
             {
                 query = query.Where(
-                    trade => trade.SellerId == sellerId.Value);
-            }
-
-            if (buyerId.HasValue)
-            {
-                query = query.Where(
-                    trade => trade.BuyerId == buyerId.Value);
+                    trade =>
+                        trade.SellerId == participantId.Value ||
+                        trade.BuyerId == participantId.Value);
             }
 
             if (energyType.HasValue)
@@ -206,23 +284,18 @@ public class GetTradesServiceTests
         }
 
         public Task<int> CountAsync(
-            Guid? sellerId = null,
-            Guid? buyerId = null,
+            Guid? participantId = null,
             EnergyType? energyType = null,
             CancellationToken cancellationToken = default)
         {
             var query = _trades.AsEnumerable();
 
-            if (sellerId.HasValue)
+            if (participantId.HasValue)
             {
                 query = query.Where(
-                    trade => trade.SellerId == sellerId.Value);
-            }
-
-            if (buyerId.HasValue)
-            {
-                query = query.Where(
-                    trade => trade.BuyerId == buyerId.Value);
+                    trade =>
+                        trade.SellerId == participantId.Value ||
+                        trade.BuyerId == participantId.Value);
             }
 
             if (energyType.HasValue)
