@@ -1,5 +1,6 @@
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Abstractions.Security;
+using EnergyTrade.Application.Common.Exceptions;
 
 namespace EnergyTrade.Application.Auth.Login;
 
@@ -46,7 +47,7 @@ public sealed class LoginService
 
         if (user is null)
         {
-            throw new InvalidOperationException(
+            throw new UnauthorizedException(
                 "Invalid email or password.");
         }
 
@@ -57,7 +58,7 @@ public sealed class LoginService
 
         if (!passwordValid)
         {
-            throw new InvalidOperationException(
+            throw new UnauthorizedException(
                 "Invalid email or password.");
         }
 
