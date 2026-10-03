@@ -28,6 +28,7 @@ builder.Services
     .AddJwtBearer(options =>
     {
         options.MapInboundClaims = false;
+
         options.TokenValidationParameters =
             new TokenValidationParameters
             {
@@ -44,17 +45,6 @@ builder.Services
                         Encoding.UTF8.GetBytes(
                             jwtSettings.Key))
             };
-
-        options.Events = new JwtBearerEvents
-        {
-            OnAuthenticationFailed = context =>
-            {
-                Console.WriteLine(
-                    $"JWT authentication failed: {context.Exception.Message}");
-
-                return Task.CompletedTask;
-            }
-        };
     });
 
 builder.Services.AddControllers();
@@ -75,10 +65,9 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-//app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.UseAuthentication();
-
 app.UseAuthorization();
 
 app.MapControllers();

@@ -13,6 +13,7 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
     {
         var statusCode = exception switch
         {
+            UnauthorizedException => StatusCodes.Status401Unauthorized,
             ForbiddenException => StatusCodes.Status403Forbidden,
             IdempotencyConflictException => StatusCodes.Status409Conflict,
             ArgumentException => StatusCodes.Status400BadRequest,
@@ -23,6 +24,7 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
         var title = statusCode switch
         {
             StatusCodes.Status400BadRequest => "Invalid request",
+            StatusCodes.Status401Unauthorized => "Unauthorized",
             StatusCodes.Status403Forbidden => "Forbidden",
             StatusCodes.Status409Conflict => "Conflict",
             _ => "Internal server error"
