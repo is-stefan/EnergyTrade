@@ -2,6 +2,7 @@ using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Abstractions.Security;
 using EnergyTrade.Application.Auth.Register;
 using EnergyTrade.Domain.Entities;
+using EnergyTrade.Application.Common.Exceptions;
 
 namespace EnergyTrade.Application.Tests.Auth.Register;
 
@@ -47,7 +48,7 @@ public class RegisterServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenEmailAlreadyExists_ThrowsInvalidOperationException()
+    public async Task ExecuteAsync_WhenEmailAlreadyExists_ThrowsConflictException()
     {
         // Arrange
         var userRepository = new FakeUserRepository
@@ -66,7 +67,7 @@ public class RegisterServiceTests
             "Password123!");
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<ConflictException>(
             () => service.ExecuteAsync(request));
 
         Assert.Null(userRepository.AddedUser);

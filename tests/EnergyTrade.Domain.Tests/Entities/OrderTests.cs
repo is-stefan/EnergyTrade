@@ -1,5 +1,6 @@
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
+using EnergyTrade.Domain.Common.Exceptions;
 
 namespace EnergyTrade.Domain.Tests.Entities;
 
@@ -246,7 +247,7 @@ public class OrderTests
         order.Fill();
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(
+        Assert.Throws<BusinessRuleException>(
             () => order.Fill());
     }
 
@@ -259,7 +260,7 @@ public class OrderTests
         order.Cancel();
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(
+        Assert.Throws<BusinessRuleException>(
             () => order.Cancel());
     }
 
@@ -272,7 +273,7 @@ public class OrderTests
         order.Fill();
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(
+        Assert.Throws<BusinessRuleException>(
             () => order.Cancel());
     }
 
@@ -285,7 +286,7 @@ public class OrderTests
         order.Cancel();
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(
+        Assert.Throws<BusinessRuleException>(
             () => order.Fill());
     }
 

@@ -3,6 +3,7 @@ using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.EnergyOffers.Close;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
+using EnergyTrade.Domain.Common.Exceptions;
 
 namespace EnergyTrade.Application.Tests.EnergyOffers.Close;
 
@@ -70,7 +71,7 @@ public class CloseEnergyOfferServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenOfferIsAlreadyClosed_ThrowsInvalidOperationException()
+    public async Task ExecuteAsync_WhenOfferIsAlreadyClosed_ThrowsBusinessRuleException()
     {
         // Arrange
         var offer = CreateValidOffer();
@@ -80,7 +81,7 @@ public class CloseEnergyOfferServiceTests
         var service = new CloseEnergyOfferService(repository);
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<BusinessRuleException>(
             () => service.ExecuteAsync(
                 offer.SellerId,
                 offer.Id));

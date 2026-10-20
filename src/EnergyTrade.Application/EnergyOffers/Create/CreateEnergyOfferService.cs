@@ -36,9 +36,8 @@ public sealed class CreateEnergyOfferService
 
         if (portfolio is null)
         {
-            throw new ArgumentException(
-                "Portfolio does not exist.",
-                nameof(request.PortfolioId));
+            throw new NotFoundException(
+                "Portfolio does not exist.");
         }
 
         if (portfolio.UserId != userId)
@@ -49,7 +48,7 @@ public sealed class CreateEnergyOfferService
 
         if (portfolio.Status != PortfolioStatus.Active)
         {
-            throw new InvalidOperationException(
+            throw new ConflictException(
                 "Only active portfolios can create energy offers.");
         }
 

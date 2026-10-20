@@ -118,7 +118,7 @@ public class CreateEnergyOfferServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPortfolioDoesNotExist_ThrowsArgumentException()
+    public async Task ExecuteAsync_WhenPortfolioDoesNotExist_ThrowsNotFoundException()
     {
         // Arrange
         var repository = new FakeEnergyOfferRepository();
@@ -146,7 +146,7 @@ public class CreateEnergyOfferServiceTests
             deliveryEnd);
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(
+        await Assert.ThrowsAsync<NotFoundException>(
             () => service.ExecuteAsync(
                 sellerId,
                 request));
@@ -156,7 +156,7 @@ public class CreateEnergyOfferServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPortfolioIsClosed_ThrowsInvalidOperationException()
+    public async Task ExecuteAsync_WhenPortfolioIsClosed_ThrowsConflictException()
     {
         // Arrange
         var repository = new FakeEnergyOfferRepository();
@@ -191,7 +191,7 @@ public class CreateEnergyOfferServiceTests
             portfolioRepository);
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<ConflictException>(
             () => service.ExecuteAsync(
                 sellerId,
                 request));
@@ -201,7 +201,7 @@ public class CreateEnergyOfferServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPortfolioBelongsToAnotherUser_ThrowsInvalidOperationException()
+    public async Task ExecuteAsync_WhenPortfolioBelongsToAnotherUser_ThrowsForbiddenException()
     {
         // Arrange
         var repository = new FakeEnergyOfferRepository();

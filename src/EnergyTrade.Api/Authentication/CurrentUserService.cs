@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using EnergyTrade.Application.Abstractions.Authentication;
+using EnergyTrade.Application.Common.Exceptions;
 
 namespace EnergyTrade.Api.Authentication;
 
@@ -25,13 +26,13 @@ public sealed class CurrentUserService : ICurrentUserService
 
             if (string.IsNullOrWhiteSpace(userIdClaim))
             {
-                throw new InvalidOperationException(
+                throw new UnauthorizedException(
                     "Authenticated user id was not found.");
             }
 
             if (!Guid.TryParse(userIdClaim, out var userId))
             {
-                throw new InvalidOperationException(
+                throw new UnauthorizedException(
                     "Authenticated user id is invalid.");
             }
 

@@ -1,5 +1,6 @@
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
+using EnergyTrade.Domain.Common.Exceptions;
 
 namespace EnergyTrade.Domain.Tests.Entities;
 
@@ -82,7 +83,7 @@ public class TradeTests
     {
         var userId = Guid.NewGuid();
 
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.Throws<BusinessRuleException>(() =>
             new Trade(
                 Guid.NewGuid(),
                 userId,

@@ -3,6 +3,7 @@ using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.Portfolios.Rename;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
+using EnergyTrade.Domain.Common.Exceptions;
 
 namespace EnergyTrade.Application.Tests.Portfolios.Rename;
 
@@ -76,7 +77,7 @@ public class RenamePortfolioServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPortfolioIsClosed_ThrowsInvalidOperationException()
+    public async Task ExecuteAsync_WhenPortfolioIsClosed_ThrowsBusinessRuleException()
     {
         var portfolio = new Portfolio(
             Guid.NewGuid(),
@@ -90,7 +91,7 @@ public class RenamePortfolioServiceTests
 
         var request = new RenamePortfolioRequest("New Name");
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<BusinessRuleException>(
             () => service.ExecuteAsync(
                 portfolio.UserId,
                 portfolio.Id,

@@ -192,7 +192,7 @@ public class CreateOrderServiceTests
             deliveryEnd);
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(
+        await Assert.ThrowsAsync<NotFoundException>(
             () => service.ExecuteAsync(
                 userId,
                 request));
@@ -236,7 +236,7 @@ public class CreateOrderServiceTests
             portfolioRepository);
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<ConflictException>(
             () => service.ExecuteAsync(
                 userId,
                 request));

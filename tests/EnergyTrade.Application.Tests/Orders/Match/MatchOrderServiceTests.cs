@@ -4,6 +4,7 @@ using EnergyTrade.Application.Orders.Match;
 using EnergyTrade.Application.Positions.ApplyTrade;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
+using EnergyTrade.Domain.Common.Exceptions;
 
 namespace EnergyTrade.Application.Tests.Orders.Match;
 
@@ -174,7 +175,7 @@ public class MatchOrderServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenOrderIsNotOpen_ThrowsInvalidOperationException()
+    public async Task ExecuteAsync_WhenOrderIsNotOpen_ThrowsBusinessRuleException()
     {
         // Arrange
         var order = CreateOrder();
@@ -200,7 +201,7 @@ public class MatchOrderServiceTests
             transactionManager);
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<BusinessRuleException>(
             () => service.ExecuteAsync(
                 order.BuyerId,
                 order.Id));
