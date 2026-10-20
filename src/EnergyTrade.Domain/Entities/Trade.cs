@@ -1,4 +1,5 @@
 using EnergyTrade.Domain.Enums;
+using EnergyTrade.Domain.Common.Exceptions;
 
 namespace EnergyTrade.Domain.Entities;
 
@@ -58,7 +59,7 @@ public class Trade
 
         if (sellerId == buyerId)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Seller and buyer cannot be the same user.");
         }
 

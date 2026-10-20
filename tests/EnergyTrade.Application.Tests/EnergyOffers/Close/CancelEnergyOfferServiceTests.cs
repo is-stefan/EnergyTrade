@@ -3,6 +3,7 @@ using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.EnergyOffers.Cancel;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
+using EnergyTrade.Domain.Common.Exceptions;
 
 namespace EnergyTrade.Application.Tests.EnergyOffers.Cancel;
 
@@ -80,7 +81,7 @@ public class CancelEnergyOfferServiceTests
         var service = new CancelEnergyOfferService(repository);
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<BusinessRuleException>(
             () => service.ExecuteAsync(
                 offer.SellerId,
                 offer.Id));

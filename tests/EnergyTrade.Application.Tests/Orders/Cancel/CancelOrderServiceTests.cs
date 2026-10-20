@@ -3,6 +3,7 @@ using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.Orders.Cancel;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
+using EnergyTrade.Domain.Common.Exceptions;
 
 namespace EnergyTrade.Application.Tests.Orders.Cancel;
 
@@ -82,7 +83,7 @@ public class CancelOrderServiceTests
         var service = new CancelOrderService(repository);
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<BusinessRuleException>(
             () => service.ExecuteAsync(
                 order.BuyerId,
                 order.Id));
@@ -91,7 +92,7 @@ public class CancelOrderServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenOrderIsFilled_ThrowsInvalidOperationException()
+    public async Task ExecuteAsync_WhenOrderIsFilled_ThrowsBusinessRuleException()
     {
         // Arrange
         var order = CreateValidOrder();
@@ -101,7 +102,7 @@ public class CancelOrderServiceTests
         var service = new CancelOrderService(repository);
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<BusinessRuleException>(
             () => service.ExecuteAsync(
                 order.BuyerId,
                 order.Id));

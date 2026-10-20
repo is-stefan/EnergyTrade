@@ -3,6 +3,7 @@ using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.Portfolios.Close;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
+using EnergyTrade.Domain.Common.Exceptions;
 
 namespace EnergyTrade.Application.Tests.Portfolios.Close;
 
@@ -78,7 +79,7 @@ public class ClosePortfolioServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPortfolioIsAlreadyClosed_ThrowsInvalidOperationException()
+    public async Task ExecuteAsync_WhenPortfolioIsAlreadyClosed_ThrowsBusinessRuleException()
     {
         // Arrange
         var portfolio = new Portfolio(
@@ -92,7 +93,7 @@ public class ClosePortfolioServiceTests
         var service = new ClosePortfolioService(repository);
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<BusinessRuleException>(
             () => service.ExecuteAsync(
                 portfolio.UserId,
                 portfolio.Id));

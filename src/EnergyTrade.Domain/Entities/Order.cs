@@ -1,4 +1,5 @@
 using EnergyTrade.Domain.Enums;
+using EnergyTrade.Domain.Common.Exceptions;
 
 namespace EnergyTrade.Domain.Entities;
 
@@ -109,7 +110,7 @@ public class Order
     {
         if (Status != OrderStatus.Open)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Only open orders can be modified.");
         }
     }

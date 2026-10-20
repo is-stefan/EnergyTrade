@@ -1,5 +1,6 @@
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
+using EnergyTrade.Domain.Common.Exceptions;
 
 namespace EnergyTrade.Domain.Tests.Entities;
 
@@ -79,26 +80,26 @@ public class PortfolioTests
     }
 
     [Fact]
-    public void Close_WhenAlreadyClosed_ThrowsInvalidOperationException()
+    public void Close_WhenAlreadyClosed_ThrowsBusinessRuleException()
     {
         // Arrange
         var portfolio = CreatePortfolio();
         portfolio.Close();
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(
+        Assert.Throws<BusinessRuleException>(
             () => portfolio.Close());
     }
 
     [Fact]
-    public void Rename_WhenPortfolioIsClosed_ThrowsInvalidOperationException()
+    public void Rename_WhenPortfolioIsClosed_ThrowsBusinessRuleException()
     {
         // Arrange
         var portfolio = CreatePortfolio();
         portfolio.Close();
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(
+        Assert.Throws<BusinessRuleException>(
             () => portfolio.Rename("New Name"));
     }
 

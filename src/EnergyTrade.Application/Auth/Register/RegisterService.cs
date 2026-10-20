@@ -1,6 +1,7 @@
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Abstractions.Security;
 using EnergyTrade.Domain.Entities;
+using EnergyTrade.Application.Common.Exceptions;
 
 namespace EnergyTrade.Application.Auth.Register;
 
@@ -45,7 +46,7 @@ public sealed class RegisterService
 
         if (emailExists)
         {
-            throw new InvalidOperationException(
+            throw new ConflictException(
                 "A user with this email already exists.");
         }
 

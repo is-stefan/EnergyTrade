@@ -1,4 +1,5 @@
 using EnergyTrade.Domain.Enums;
+using EnergyTrade.Domain.Common.Exceptions;
 
 namespace EnergyTrade.Domain.Entities;
 
@@ -77,7 +78,7 @@ public class Portfolio
     {
         if (Status != PortfolioStatus.Active)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Only active portfolios can be modified.");
         }
     }

@@ -1,4 +1,5 @@
 using EnergyTrade.Domain.Enums;
+using EnergyTrade.Domain.Common.Exceptions;
 
 namespace EnergyTrade.Domain.Entities
 {
@@ -163,7 +164,7 @@ namespace EnergyTrade.Domain.Entities
         {
             if (Status != OfferStatus.Open)
             {
-                throw new InvalidOperationException(
+                throw new BusinessRuleException(
                     "Only open offers can be modified"
                 );
             }
