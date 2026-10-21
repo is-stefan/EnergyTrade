@@ -7,10 +7,10 @@ using EnergyTrade.Domain.Enums;
 
 namespace EnergyTrade.Application.Tests.Orders.Create;
 
-public class CreateOrderServiceTests
+public class CreateOrderCommandHandlerTests
 {
     [Fact]
-    public async Task ExecuteAsync_WithValidRequest_CreatesOrder()
+    public async Task Handle_WithValidRequest_CreatesOrder()
     {
         // Arrange
         var repository = new FakeOrderRepository();
@@ -21,7 +21,8 @@ public class CreateOrderServiceTests
         var deliveryStart = DateTimeOffset.UtcNow.AddDays(1);
         var deliveryEnd = deliveryStart.AddDays(30);
 
-        var request = new CreateOrderRequest(
+        var request = new CreateOrderCommand(
+            userId,
             portfolioId,
             EnergyType.Solar,
             100m,
@@ -40,15 +41,14 @@ public class CreateOrderServiceTests
 
         var businessMetrics = new FakeBusinessMetrics();
 
-        var service = new CreateOrderService(
+        var service = new CreateOrderCommandHandler(
             repository,
             portfolioRepository,
             businessMetrics);
 
         // Act
-        var result = await service.ExecuteAsync(
-            userId,
-            request);
+        var result = await service.Handle(
+            request, CancellationToken.None);
 
         // Assert
         Assert.NotEqual(Guid.Empty, result.Id);
@@ -86,7 +86,7 @@ public class CreateOrderServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithInvalidQuantity_ThrowsArgumentOutOfRangeException()
+    public async Task Handle_WithInvalidQuantity_ThrowsArgumentOutOfRangeException()
     {
         // Arrange
         var repository = new FakeOrderRepository();
@@ -97,7 +97,8 @@ public class CreateOrderServiceTests
         var deliveryStart = DateTimeOffset.UtcNow.AddDays(1);
         var deliveryEnd = deliveryStart.AddDays(30);
 
-        var request = new CreateOrderRequest(
+        var request = new CreateOrderCommand(
+            userId,
             portfolioId,
             EnergyType.Solar,
             0m,
@@ -116,23 +117,22 @@ public class CreateOrderServiceTests
 
         var businessMetrics = new FakeBusinessMetrics();
 
-        var service = new CreateOrderService(
+        var service = new CreateOrderCommandHandler(
             repository,
             portfolioRepository,
             businessMetrics);
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => service.ExecuteAsync(
-                userId,
-                request));
+            () => service.Handle(
+                request, CancellationToken.None));
 
         Assert.Equal(0, repository.AddCallCount);
         Assert.Equal(0, businessMetrics.OrdersCreated);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithInvalidDeliveryRange_ThrowsArgumentException()
+    public async Task Handle_WithInvalidDeliveryRange_ThrowsArgumentException()
     {
         // Arrange
         var repository = new FakeOrderRepository();
@@ -143,7 +143,8 @@ public class CreateOrderServiceTests
         var deliveryStart = DateTimeOffset.UtcNow.AddDays(10);
         var deliveryEnd = deliveryStart.AddDays(-1);
 
-        var request = new CreateOrderRequest(
+        var request = new CreateOrderCommand(
+            userId,
             portfolioId,
             EnergyType.Solar,
             100m,
@@ -162,23 +163,22 @@ public class CreateOrderServiceTests
 
         var businessMetrics = new FakeBusinessMetrics();
 
-        var service = new CreateOrderService(
+        var service = new CreateOrderCommandHandler(
             repository,
             portfolioRepository,
             businessMetrics);
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(
-            () => service.ExecuteAsync(
-                userId,
-                request));
+            () => service.Handle(
+                request, CancellationToken.None));
 
         Assert.Equal(0, repository.AddCallCount);
         Assert.Equal(0, businessMetrics.OrdersCreated);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPortfolioDoesNotExist_ThrowsNotFoundException()
+    public async Task Handle_WhenPortfolioDoesNotExist_ThrowsNotFoundException()
     {
         // Arrange
         var repository = new FakeOrderRepository();
@@ -191,7 +191,7 @@ public class CreateOrderServiceTests
 
         var businessMetrics = new FakeBusinessMetrics();
 
-        var service = new CreateOrderService(
+        var service = new CreateOrderCommandHandler(
             repository,
             portfolioRepository,
             businessMetrics);
@@ -199,7 +199,8 @@ public class CreateOrderServiceTests
         var deliveryStart = DateTimeOffset.UtcNow.AddDays(1);
         var deliveryEnd = deliveryStart.AddDays(30);
 
-        var request = new CreateOrderRequest(
+        var request = new CreateOrderCommand(
+            userId,
             portfolioId,
             EnergyType.Solar,
             100m,
@@ -210,16 +211,15 @@ public class CreateOrderServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<NotFoundException>(
-            () => service.ExecuteAsync(
-                userId,
-                request));
+            () => service.Handle(
+                request, CancellationToken.None));
 
         Assert.Equal(0, repository.AddCallCount);
         Assert.Equal(0, businessMetrics.OrdersCreated);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPortfolioIsClosed_ThrowsConflictException()
+    public async Task Handle_WhenPortfolioIsClosed_ThrowsConflictException()
     {
         // Arrange
         var repository = new FakeOrderRepository();
@@ -230,7 +230,8 @@ public class CreateOrderServiceTests
         var deliveryStart = DateTimeOffset.UtcNow.AddDays(1);
         var deliveryEnd = deliveryStart.AddDays(30);
 
-        var request = new CreateOrderRequest(
+        var request = new CreateOrderCommand(
+            userId,
             portfolioId,
             EnergyType.Solar,
             100m,
@@ -251,35 +252,35 @@ public class CreateOrderServiceTests
 
         var businessMetrics = new FakeBusinessMetrics();
 
-        var service = new CreateOrderService(
+        var service = new CreateOrderCommandHandler(
             repository,
             portfolioRepository,
             businessMetrics);
 
         // Act & Assert
         await Assert.ThrowsAsync<ConflictException>(
-            () => service.ExecuteAsync(
-                userId,
-                request));
+            () => service.Handle(
+                request, CancellationToken.None));
 
         Assert.Equal(0, repository.AddCallCount);
         Assert.Equal(0, businessMetrics.OrdersCreated);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPortfolioBelongsToAnotherUser_ThrowsForbiddenException()
+    public async Task Handle_WhenPortfolioBelongsToAnotherUser_ThrowsForbiddenException()
     {
         // Arrange
         var repository = new FakeOrderRepository();
 
-        var authenticatedUserId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
         var portfolioOwnerId = Guid.NewGuid();
         var portfolioId = Guid.NewGuid();
 
         var deliveryStart = DateTimeOffset.UtcNow.AddDays(1);
         var deliveryEnd = deliveryStart.AddDays(30);
 
-        var request = new CreateOrderRequest(
+        var request = new CreateOrderCommand(
+            userId,
             portfolioId,
             EnergyType.Solar,
             100m,
@@ -298,16 +299,15 @@ public class CreateOrderServiceTests
 
         var businessMetrics = new FakeBusinessMetrics();
 
-        var service = new CreateOrderService(
+        var service = new CreateOrderCommandHandler(
             repository,
             portfolioRepository,
             businessMetrics);
 
         // Act & Assert
         await Assert.ThrowsAsync<ForbiddenException>(
-            () => service.ExecuteAsync(
-                authenticatedUserId,
-                request));
+            () => service.Handle(
+                request, CancellationToken.None));
 
         Assert.Equal(0, repository.AddCallCount);
         Assert.Equal(0, businessMetrics.OrdersCreated);
