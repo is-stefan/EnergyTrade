@@ -239,7 +239,7 @@ public class OrderTests
     }
 
     [Fact]
-    public void Fill_WhenOrderIsAlreadyFilled_ThrowsInvalidOperationException()
+    public void Fill_WhenOrderIsAlreadyFilled_ThrowsBusinessRuleException()
     {
         // Arrange
         var order = CreateOrder();
@@ -252,7 +252,7 @@ public class OrderTests
     }
 
     [Fact]
-    public void Cancel_WhenOrderIsAlreadyCancelled_ThrowsInvalidOperationException()
+    public void Cancel_WhenOrderIsAlreadyCancelled_ThrowsBusinessRuleException()
     {
         // Arrange
         var order = CreateOrder();
@@ -265,7 +265,7 @@ public class OrderTests
     }
 
     [Fact]
-    public void Cancel_WhenOrderIsFilled_ThrowsInvalidOperationException()
+    public void Cancel_WhenOrderIsFilled_ThrowsBusinessRuleException()
     {
         // Arrange
         var order = CreateOrder();
@@ -278,7 +278,7 @@ public class OrderTests
     }
 
     [Fact]
-    public void Fill_WhenOrderIsCancelled_ThrowsInvalidOperationException()
+    public void Fill_WhenOrderIsCancelled_ThrowsBusinessRuleException()
     {
         // Arrange
         var order = CreateOrder();

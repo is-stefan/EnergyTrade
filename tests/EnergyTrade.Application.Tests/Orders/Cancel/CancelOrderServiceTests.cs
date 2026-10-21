@@ -73,7 +73,7 @@ public class CancelOrderServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenOrderIsAlreadyCancelled_ThrowsInvalidOperationException()
+    public async Task ExecuteAsync_WhenOrderIsAlreadyCancelled_ThrowsBusinessRuleException()
     {
         // Arrange
         var order = CreateValidOrder();

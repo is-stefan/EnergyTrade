@@ -1,7 +1,8 @@
+using EnergyTrade.Application.Abstractions.Observability;
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
-using EnergyTrade.Application.Common.Exceptions;
 
 namespace EnergyTrade.Application.EnergyOffers.Create;
 
@@ -9,13 +10,16 @@ public sealed class CreateEnergyOfferService
 {
     private readonly IEnergyOfferRepository _energyOfferRepository;
     private readonly IPortfolioRepository _portfolioRepository;
+    private readonly IBusinessMetrics _businessMetrics;
 
     public CreateEnergyOfferService(
         IEnergyOfferRepository energyOfferRepository,
-        IPortfolioRepository portfolioRepository)
+        IPortfolioRepository portfolioRepository,
+        IBusinessMetrics businessMetrics)
     {
         _energyOfferRepository = energyOfferRepository;
         _portfolioRepository = portfolioRepository;
+        _businessMetrics = businessMetrics;
     }
 
     public async Task<CreateEnergyOfferResult> ExecuteAsync(
@@ -65,6 +69,8 @@ public sealed class CreateEnergyOfferService
         await _energyOfferRepository.AddAsync(
             energyOffer,
             cancellationToken);
+
+        _businessMetrics.EnergyOfferCreated();
 
         return new CreateEnergyOfferResult(
             energyOffer.Id,

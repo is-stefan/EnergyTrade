@@ -71,7 +71,7 @@ public class CancelEnergyOfferServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenOfferIsAlreadyCancelled_ThrowsInvalidOperationException()
+    public async Task ExecuteAsync_WhenOfferIsAlreadyCancelled_ThrowsBusinessRuleException()
     {
         // Arrange
         var offer = CreateValidOffer();

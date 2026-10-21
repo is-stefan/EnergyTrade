@@ -7,6 +7,11 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using EnergyTrade.Api.Authentication;
 using EnergyTrade.Application.Abstractions.Authentication;
+using EnergyTrade.Api.Middleware;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Metrics;
+using EnergyTrade.Infrastructure.Observability;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,7 +61,35 @@ builder.Services.AddScoped<
     ICurrentUserService,
     CurrentUserService>();
 
+builder.Logging.AddSimpleConsole(options =>
+{
+    options.IncludeScopes = true;
+});
+
+builder.Services
+    .AddOpenTelemetry()
+    .ConfigureResource(resource =>
+        resource.AddService("EnergyTrade.Api"))
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddAspNetCoreInstrumentation()
+            .AddSource("Oracle.ManagedDataAccess.Core")
+            .AddConsoleExporter();
+    })
+    .WithMetrics(metrics =>
+    {
+        metrics
+            .AddAspNetCoreInstrumentation()
+            .AddRuntimeInstrumentation()
+            .AddMeter(EnergyTradeMetrics.MeterName)
+            .AddConsoleExporter();
+    });
+    
 var app = builder.Build();
+
+app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseMiddleware<RequestLoggingMiddleware>();
 
 app.UseExceptionHandler();
 

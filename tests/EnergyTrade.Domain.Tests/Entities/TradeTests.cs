@@ -79,7 +79,7 @@ public class TradeTests
     }
 
     [Fact]
-    public void Constructor_WhenSellerAndBuyerAreSame_ThrowsInvalidOperationException()
+    public void Constructor_WhenSellerAndBuyerAreSame_ThrowsBusinessRuleException()
     {
         var userId = Guid.NewGuid();
 

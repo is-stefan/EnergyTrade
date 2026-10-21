@@ -1,8 +1,9 @@
+using EnergyTrade.Application.Abstractions.Observability;
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.Orders.Create;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
-using EnergyTrade.Application.Common.Exceptions;
 
 namespace EnergyTrade.Application.Tests.Orders.Create;
 
@@ -37,9 +38,12 @@ public class CreateOrderServiceTests
         var portfolioRepository =
             new FakePortfolioRepository(portfolio);
 
+        var businessMetrics = new FakeBusinessMetrics();
+
         var service = new CreateOrderService(
             repository,
-            portfolioRepository);
+            portfolioRepository,
+            businessMetrics);
 
         // Act
         var result = await service.ExecuteAsync(
@@ -77,6 +81,8 @@ public class CreateOrderServiceTests
         Assert.Equal(
             request.Currency,
             repository.AddedOrder.Currency);
+
+        Assert.Equal(1, businessMetrics.OrdersCreated);
     }
 
     [Fact]
@@ -108,9 +114,12 @@ public class CreateOrderServiceTests
         var portfolioRepository =
             new FakePortfolioRepository(portfolio);
 
+        var businessMetrics = new FakeBusinessMetrics();
+
         var service = new CreateOrderService(
             repository,
-            portfolioRepository);
+            portfolioRepository,
+            businessMetrics);
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
@@ -119,6 +128,7 @@ public class CreateOrderServiceTests
                 request));
 
         Assert.Equal(0, repository.AddCallCount);
+        Assert.Equal(0, businessMetrics.OrdersCreated);
     }
 
     [Fact]
@@ -150,9 +160,12 @@ public class CreateOrderServiceTests
         var portfolioRepository =
             new FakePortfolioRepository(portfolio);
 
+        var businessMetrics = new FakeBusinessMetrics();
+
         var service = new CreateOrderService(
             repository,
-            portfolioRepository);
+            portfolioRepository,
+            businessMetrics);
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(
@@ -161,10 +174,11 @@ public class CreateOrderServiceTests
                 request));
 
         Assert.Equal(0, repository.AddCallCount);
+        Assert.Equal(0, businessMetrics.OrdersCreated);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPortfolioDoesNotExist_ThrowsArgumentException()
+    public async Task ExecuteAsync_WhenPortfolioDoesNotExist_ThrowsNotFoundException()
     {
         // Arrange
         var repository = new FakeOrderRepository();
@@ -175,9 +189,12 @@ public class CreateOrderServiceTests
         var portfolioRepository =
             new FakePortfolioRepository(null);
 
+        var businessMetrics = new FakeBusinessMetrics();
+
         var service = new CreateOrderService(
             repository,
-            portfolioRepository);
+            portfolioRepository,
+            businessMetrics);
 
         var deliveryStart = DateTimeOffset.UtcNow.AddDays(1);
         var deliveryEnd = deliveryStart.AddDays(30);
@@ -198,10 +215,11 @@ public class CreateOrderServiceTests
                 request));
 
         Assert.Equal(0, repository.AddCallCount);
+        Assert.Equal(0, businessMetrics.OrdersCreated);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPortfolioIsClosed_ThrowsInvalidOperationException()
+    public async Task ExecuteAsync_WhenPortfolioIsClosed_ThrowsConflictException()
     {
         // Arrange
         var repository = new FakeOrderRepository();
@@ -231,9 +249,12 @@ public class CreateOrderServiceTests
         var portfolioRepository =
             new FakePortfolioRepository(portfolio);
 
+        var businessMetrics = new FakeBusinessMetrics();
+
         var service = new CreateOrderService(
             repository,
-            portfolioRepository);
+            portfolioRepository,
+            businessMetrics);
 
         // Act & Assert
         await Assert.ThrowsAsync<ConflictException>(
@@ -242,10 +263,11 @@ public class CreateOrderServiceTests
                 request));
 
         Assert.Equal(0, repository.AddCallCount);
+        Assert.Equal(0, businessMetrics.OrdersCreated);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPortfolioBelongsToAnotherUser_ThrowsInvalidOperationException()
+    public async Task ExecuteAsync_WhenPortfolioBelongsToAnotherUser_ThrowsForbiddenException()
     {
         // Arrange
         var repository = new FakeOrderRepository();
@@ -274,9 +296,12 @@ public class CreateOrderServiceTests
         var portfolioRepository =
             new FakePortfolioRepository(portfolio);
 
+        var businessMetrics = new FakeBusinessMetrics();
+
         var service = new CreateOrderService(
             repository,
-            portfolioRepository);
+            portfolioRepository,
+            businessMetrics);
 
         // Act & Assert
         await Assert.ThrowsAsync<ForbiddenException>(
@@ -285,6 +310,7 @@ public class CreateOrderServiceTests
                 request));
 
         Assert.Equal(0, repository.AddCallCount);
+        Assert.Equal(0, businessMetrics.OrdersCreated);
     }
 
     private sealed class FakeOrderRepository
@@ -376,6 +402,32 @@ public class CreateOrderServiceTests
             CancellationToken cancellationToken = default)
         {
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeBusinessMetrics : IBusinessMetrics
+    {
+        public int OrdersCreated { get; private set; }
+        public int EnergyOffersCreated { get; private set; }
+        public int TradesCompleted { get; private set; }
+
+        public void OrderCreated()
+        {
+            OrdersCreated++;
+        }
+
+        public void EnergyOfferCreated()
+        {
+            EnergyOffersCreated++;
+        }
+
+        public void TradeCompleted()
+        {
+            TradesCompleted++;
+        }
+
+        public void RecordOrderMatchingDuration(double milliseconds)
+        {
         }
     }
 }

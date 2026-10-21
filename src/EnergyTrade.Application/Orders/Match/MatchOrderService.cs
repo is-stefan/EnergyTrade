@@ -1,7 +1,9 @@
+using EnergyTrade.Application.Abstractions.Observability;
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.Positions.ApplyTrade;
 using EnergyTrade.Domain.Entities;
+using System.Diagnostics;
 
 namespace EnergyTrade.Application.Orders.Match;
 
@@ -12,27 +14,34 @@ public sealed class MatchOrderService
     private readonly ITradeRepository _tradeRepository;
     private readonly ApplyTradeToPositionsService _applyTradeToPositionsService;
     private readonly ITransactionManager _transactionManager;
+    private readonly IBusinessMetrics _businessMetrics;
 
     public MatchOrderService(
         IOrderRepository orderRepository,
         IEnergyOfferRepository energyOfferRepository,
         ITradeRepository tradeRepository,
         ApplyTradeToPositionsService applyTradeToPositionsService,
-        ITransactionManager transactionManager)
+        ITransactionManager transactionManager,
+        IBusinessMetrics businessMetrics)
     {
         _orderRepository = orderRepository;
         _energyOfferRepository = energyOfferRepository;
         _tradeRepository = tradeRepository;
         _applyTradeToPositionsService = applyTradeToPositionsService;
         _transactionManager = transactionManager;
+        _businessMetrics = businessMetrics;
     }
 
+    
     public async Task<MatchOrderResult?> ExecuteAsync(
         Guid userId,
         Guid orderId,
         CancellationToken cancellationToken = default)
     {
+        var stopwatch = Stopwatch.StartNew();
+
         MatchOrderResult? result = null;
+        var tradeCompleted = false;
 
         try
         {
@@ -104,8 +113,15 @@ public sealed class MatchOrderService
                         true,
                         trade.Id,
                         offer.Id);
+
+                    tradeCompleted = true;
                 },
                 cancellationToken);
+
+            if (tradeCompleted)
+            {
+                _businessMetrics.TradeCompleted();
+            }
         }
         catch (ConcurrencyConflictException)
         {
@@ -113,6 +129,13 @@ public sealed class MatchOrderService
                 false,
                 null,
                 null);
+        }
+        finally
+        {
+            stopwatch.Stop();
+
+            _businessMetrics.RecordOrderMatchingDuration(
+                stopwatch.Elapsed.TotalMilliseconds);
         }
 
         return result;

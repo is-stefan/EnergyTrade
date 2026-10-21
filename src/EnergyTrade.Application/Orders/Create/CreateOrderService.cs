@@ -1,7 +1,8 @@
+using EnergyTrade.Application.Abstractions.Observability;
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
-using EnergyTrade.Application.Common.Exceptions;
 
 namespace EnergyTrade.Application.Orders.Create;
 
@@ -9,13 +10,16 @@ public sealed class CreateOrderService
 {
     private readonly IOrderRepository _orderRepository;
     private readonly IPortfolioRepository _portfolioRepository;
+    private readonly IBusinessMetrics _businessMetrics;
 
     public CreateOrderService(
         IOrderRepository orderRepository,
-        IPortfolioRepository portfolioRepository)
+        IPortfolioRepository portfolioRepository,
+        IBusinessMetrics businessMetrics)
     {
         _orderRepository = orderRepository;
         _portfolioRepository = portfolioRepository;
+        _businessMetrics = businessMetrics;
     }
 
     public async Task<CreateOrderResult> ExecuteAsync(
@@ -65,6 +69,8 @@ public sealed class CreateOrderService
         await _orderRepository.AddAsync(
             order,
             cancellationToken);
+
+        _businessMetrics.OrderCreated();
 
         return new CreateOrderResult(
             order.Id,

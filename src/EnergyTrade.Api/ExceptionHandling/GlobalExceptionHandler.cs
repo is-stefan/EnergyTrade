@@ -2,6 +2,7 @@ using EnergyTrade.Application.Common.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using EnergyTrade.Domain.Common.Exceptions;
+using EnergyTrade.Api.Observability;
 
 namespace EnergyTrade.Api.ExceptionHandling;
 
@@ -91,6 +92,13 @@ public sealed class GlobalExceptionHandler
             ? "An unexpected error occurred."
             : exception.Message;
 
+        var correlationId =
+            httpContext.Items.TryGetValue(
+                CorrelationIdConstants.ItemKey,
+                out var value)
+                ? value?.ToString()
+                : null;
+
         var problemDetails = new ProblemDetails
         {
             Status = statusCode,
@@ -101,6 +109,12 @@ public sealed class GlobalExceptionHandler
 
         problemDetails.Extensions["traceId"] =
             httpContext.TraceIdentifier;
+
+        if (!string.IsNullOrWhiteSpace(correlationId))
+        {
+            problemDetails.Extensions["correlationId"] =
+                correlationId;
+        }   
 
         httpContext.Response.StatusCode = statusCode;
 
