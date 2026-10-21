@@ -1,3 +1,4 @@
+using MediatR;
 using EnergyTrade.Application.Orders.Create;
 using Microsoft.AspNetCore.Mvc;
 using EnergyTrade.Application.Orders.GetById;
@@ -16,7 +17,7 @@ namespace EnergyTrade.Api.Controllers;
 [Route("api/orders")]
 public class OrdersController : ControllerBase
 {
-    private readonly CreateOrderService _createOrderService;
+    private readonly ISender _sender;
 
     private readonly GetOrderByIdService _getOrderByIdService;
 
@@ -31,7 +32,7 @@ public class OrdersController : ControllerBase
     private readonly ICurrentUserService _currentUserService;
 
     public OrdersController(
-        CreateOrderService createOrderService,
+        ISender sender,
         GetOrderByIdService getOrderByIdService,
         GetOrdersService getOrdersService,
         CancelOrderService cancelOrderService,
@@ -39,7 +40,7 @@ public class OrdersController : ControllerBase
         IdempotentCreateOrderService idempotentCreateOrderService,
         ICurrentUserService currentUserService)
     {
-        _createOrderService = createOrderService;
+        _sender = sender;
         _getOrderByIdService = getOrderByIdService;
         _getOrdersService = getOrdersService;
         _cancelOrderService = cancelOrderService;
@@ -149,9 +150,8 @@ public async Task<IActionResult> Cancel(
         }
         else
         {
-            result = await _createOrderService.ExecuteAsync(
-                userId,
-                request,
+            result = await _sender.Send(
+                CreateOrderCommand.FromRequest(userId, request),
                 cancellationToken);
         }
 

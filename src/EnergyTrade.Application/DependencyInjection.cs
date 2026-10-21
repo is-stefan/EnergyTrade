@@ -22,6 +22,7 @@ using EnergyTrade.Application.Portfolios.Close;
 using EnergyTrade.Application.Idempotency;
 using EnergyTrade.Application.Auth.Register;
 using EnergyTrade.Application.Auth.Login;
+using MediatR;
 
 namespace EnergyTrade.Application;
 
@@ -30,6 +31,9 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(
         this IServiceCollection services)
     {
+        services.AddMediatR(config =>
+            config.RegisterServicesFromAssemblyContaining<CreateOrderCommandHandler>());
+
         services.AddScoped<CreateEnergyOfferService>();
         services.AddScoped<GetEnergyOfferByIdService>();
         services.AddScoped<GetEnergyOffersService>();
@@ -40,7 +44,6 @@ public static class DependencyInjection
         services.AddScoped<GetTradeByIdService>();
         services.AddScoped<GetTradesService>();
 
-        services.AddScoped<CreateOrderService>();
         services.AddScoped<GetOrderByIdService>();
         services.AddScoped<GetOrdersService>();
         services.AddScoped<CancelOrderService>();

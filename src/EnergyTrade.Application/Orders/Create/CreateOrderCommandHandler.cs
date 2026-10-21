@@ -3,16 +3,18 @@ using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
+using MediatR;
 
 namespace EnergyTrade.Application.Orders.Create;
 
-public sealed class CreateOrderService
+public sealed class CreateOrderCommandHandler
+    : IRequestHandler<CreateOrderCommand, CreateOrderResult>
 {
     private readonly IOrderRepository _orderRepository;
     private readonly IPortfolioRepository _portfolioRepository;
     private readonly IBusinessMetrics _businessMetrics;
 
-    public CreateOrderService(
+    public CreateOrderCommandHandler(
         IOrderRepository orderRepository,
         IPortfolioRepository portfolioRepository,
         IBusinessMetrics businessMetrics)
@@ -22,20 +24,19 @@ public sealed class CreateOrderService
         _businessMetrics = businessMetrics;
     }
 
-    public async Task<CreateOrderResult> ExecuteAsync(
-        Guid userId,
-        CreateOrderRequest request,
-        CancellationToken cancellationToken = default)
+    public async Task<CreateOrderResult> Handle(
+        CreateOrderCommand command,
+        CancellationToken cancellationToken)
     {
-        if (userId == Guid.Empty)
+        if (command.UserId == Guid.Empty)
         {
             throw new ArgumentException(
                 "User id cannot be empty.",
-                nameof(userId));
+                nameof(command.UserId));
         }
 
         var portfolio = await _portfolioRepository.GetByIdAsync(
-            request.PortfolioId,
+            command.PortfolioId,
             cancellationToken);
 
         if (portfolio is null)
@@ -44,7 +45,7 @@ public sealed class CreateOrderService
                 "Portfolio does not exist.");
         }
 
-        if (portfolio.UserId != userId)
+        if (portfolio.UserId != command.UserId)
         {
             throw new ForbiddenException(
                 "The portfolio does not belong to the authenticated user.");
@@ -57,14 +58,14 @@ public sealed class CreateOrderService
         }
 
         var order = new Order(
-            userId,
-            request.PortfolioId,
-            request.EnergyType,
-            request.QuantityMWh,
-            request.MaxPricePerMWh,
-            request.Currency,
-            request.DeliveryStart,
-            request.DeliveryEnd);
+            command.UserId,
+            command.PortfolioId,
+            command.EnergyType,
+            command.QuantityMWh,
+            command.MaxPricePerMWh,
+            command.Currency,
+            command.DeliveryStart,
+            command.DeliveryEnd);
 
         await _orderRepository.AddAsync(
             order,

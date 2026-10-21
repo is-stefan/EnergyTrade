@@ -78,7 +78,7 @@ public class ConcurrentCreateOrderIdempotencyTests
         var scopedKey =
             $"{buyerId}:{idempotencyKey}";
 
-        // Save portfolio required by CreateOrderService
+        // Save portfolio required by CreateOrderCommandHandler
         await using (var setupScope =
                      serviceProvider.CreateAsyncScope())
         {
