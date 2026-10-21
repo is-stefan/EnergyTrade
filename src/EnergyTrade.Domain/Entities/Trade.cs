@@ -1,5 +1,5 @@
 using EnergyTrade.Domain.Enums;
-using EnergyTrade.Domain.Common.Exceptions;
+using EnergyTrade.Domain.Common.Exceptions; 
 
 namespace EnergyTrade.Domain.Entities;
 

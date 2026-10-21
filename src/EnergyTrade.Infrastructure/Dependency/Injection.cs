@@ -9,6 +9,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using EnergyTrade.Application.Abstractions.Security;
 using EnergyTrade.Infrastructure.Security;
+using EnergyTrade.Application.Abstractions.Observability;
+using EnergyTrade.Infrastructure.Observability;
 
 namespace EnergyTrade.Infrastructure;
 
@@ -39,6 +41,8 @@ public static class DependencyInjection
             configuration.GetSection("Jwt"));
 
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+
+        services.AddSingleton<IBusinessMetrics, EnergyTradeMetrics>();
 
         return services;
     }

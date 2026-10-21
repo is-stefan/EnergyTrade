@@ -1,8 +1,9 @@
+using EnergyTrade.Application.Abstractions.Observability;
 using EnergyTrade.Application.Abstractions.Persistence;
+using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.EnergyOffers.Create;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
-using EnergyTrade.Application.Common.Exceptions;
 
 namespace EnergyTrade.Application.Tests.EnergyOffers.Create;
 
@@ -40,9 +41,12 @@ public class CreateEnergyOfferServiceTests
         var portfolioRepository =
             new FakePortfolioRepository(portfolio);
 
+        var businessMetrics = new FakeBusinessMetrics();
+
         var service = new CreateEnergyOfferService(
             repository,
-            portfolioRepository);
+            portfolioRepository,
+            businessMetrics);
 
         // Act
         var result = await service.ExecuteAsync(
@@ -68,6 +72,8 @@ public class CreateEnergyOfferServiceTests
         Assert.Equal(savedOffer.Id, result.Id);
         Assert.Equal(savedOffer.Status, result.Status);
         Assert.Equal(savedOffer.CreatedAt, result.CreatedAt);
+
+        Assert.Equal(1, businessMetrics.EnergyOffersCreated);
     }
 
     [Fact]
@@ -99,9 +105,12 @@ public class CreateEnergyOfferServiceTests
         var portfolioRepository =
             new FakePortfolioRepository(portfolio);
 
+        var businessMetrics = new FakeBusinessMetrics();
+
         var service = new CreateEnergyOfferService(
             repository,
-            portfolioRepository);
+            portfolioRepository,
+            businessMetrics);
 
         // Act
         var exception =
@@ -115,6 +124,7 @@ public class CreateEnergyOfferServiceTests
 
         Assert.Equal(0, repository.AddCallCount);
         Assert.Null(repository.AddedOffer);
+        Assert.Equal(0, businessMetrics.EnergyOffersCreated);
     }
 
     [Fact]
@@ -129,9 +139,12 @@ public class CreateEnergyOfferServiceTests
         var portfolioRepository =
             new FakePortfolioRepository(null);
 
+        var businessMetrics = new FakeBusinessMetrics();
+
         var service = new CreateEnergyOfferService(
             repository,
-            portfolioRepository);
+            portfolioRepository,
+            businessMetrics);
 
         var deliveryStart = DateTimeOffset.UtcNow.AddDays(1);
         var deliveryEnd = deliveryStart.AddDays(30);
@@ -153,6 +166,7 @@ public class CreateEnergyOfferServiceTests
 
         Assert.Equal(0, repository.AddCallCount);
         Assert.Null(repository.AddedOffer);
+        Assert.Equal(0, businessMetrics.EnergyOffersCreated);
     }
 
     [Fact]
@@ -186,9 +200,12 @@ public class CreateEnergyOfferServiceTests
         var portfolioRepository =
             new FakePortfolioRepository(portfolio);
 
+        var businessMetrics = new FakeBusinessMetrics();
+
         var service = new CreateEnergyOfferService(
             repository,
-            portfolioRepository);
+            portfolioRepository,
+            businessMetrics);
 
         // Act & Assert
         await Assert.ThrowsAsync<ConflictException>(
@@ -198,6 +215,7 @@ public class CreateEnergyOfferServiceTests
 
         Assert.Equal(0, repository.AddCallCount);
         Assert.Null(repository.AddedOffer);
+        Assert.Equal(0, businessMetrics.EnergyOffersCreated);
     }
 
     [Fact]
@@ -230,9 +248,12 @@ public class CreateEnergyOfferServiceTests
         var portfolioRepository =
             new FakePortfolioRepository(portfolio);
 
+        var businessMetrics = new FakeBusinessMetrics();
+
         var service = new CreateEnergyOfferService(
             repository,
-            portfolioRepository);
+            portfolioRepository,
+            businessMetrics);
 
         // Act & Assert
         await Assert.ThrowsAsync<ForbiddenException>(
@@ -242,6 +263,7 @@ public class CreateEnergyOfferServiceTests
 
         Assert.Equal(0, repository.AddCallCount);
         Assert.Null(repository.AddedOffer);
+        Assert.Equal(0, businessMetrics.EnergyOffersCreated);
     }
 
     private sealed class FakeEnergyOfferRepository
@@ -346,6 +368,32 @@ public class CreateEnergyOfferServiceTests
             CancellationToken cancellationToken = default)
         {
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeBusinessMetrics : IBusinessMetrics
+    {
+        public int OrdersCreated { get; private set; }
+        public int EnergyOffersCreated { get; private set; }
+        public int TradesCompleted { get; private set; }
+
+        public void OrderCreated()
+        {
+            OrdersCreated++;
+        }
+
+        public void EnergyOfferCreated()
+        {
+            EnergyOffersCreated++;
+        }
+
+        public void TradeCompleted()
+        {
+            TradesCompleted++;
+        }
+
+        public void RecordOrderMatchingDuration(double milliseconds)
+        {
         }
     }
 }

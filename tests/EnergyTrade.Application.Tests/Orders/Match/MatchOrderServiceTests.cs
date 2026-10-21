@@ -1,10 +1,11 @@
+using EnergyTrade.Application.Abstractions.Observability;
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.Orders.Match;
 using EnergyTrade.Application.Positions.ApplyTrade;
+using EnergyTrade.Domain.Common.Exceptions;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
-using EnergyTrade.Domain.Common.Exceptions;
 
 namespace EnergyTrade.Application.Tests.Orders.Match;
 
@@ -26,13 +27,15 @@ public class MatchOrderServiceTests
             new ApplyTradeToPositionsService(positionRepository);
 
         var transactionManager = new FakeTransactionManager();
+        var businessMetrics = new FakeBusinessMetrics();
 
         var service = new MatchOrderService(
             orderRepository,
             energyOfferRepository,
             tradeRepository,
             applyTradeToPositionsService,
-            transactionManager);
+            transactionManager,
+            businessMetrics);
 
         // Act
         var result = await service.ExecuteAsync(
@@ -61,6 +64,8 @@ public class MatchOrderServiceTests
 
         Assert.Equal(100m, buyerPosition.QuantityMWh);
         Assert.Equal(-100m, sellerPosition.QuantityMWh);
+
+        Assert.Equal(1, businessMetrics.TradesCompleted);
     }
 
     [Fact]
@@ -76,13 +81,15 @@ public class MatchOrderServiceTests
             new ApplyTradeToPositionsService(positionRepository);
 
         var transactionManager = new FakeTransactionManager();
+        var businessMetrics = new FakeBusinessMetrics();
 
         var service = new MatchOrderService(
             orderRepository,
             energyOfferRepository,
             tradeRepository,
             applyTradeToPositionsService,
-            transactionManager);
+            transactionManager,
+            businessMetrics);
 
         // Act
         var result = await service.ExecuteAsync(
@@ -93,6 +100,7 @@ public class MatchOrderServiceTests
         Assert.Null(result);
         Assert.Equal(0, tradeRepository.AddCallCount);
         Assert.Empty(positionRepository.Positions);
+        Assert.Equal(0, businessMetrics.TradesCompleted);
     }
 
     [Fact]
@@ -110,13 +118,15 @@ public class MatchOrderServiceTests
             new ApplyTradeToPositionsService(positionRepository);
 
         var transactionManager = new FakeTransactionManager();
+        var businessMetrics = new FakeBusinessMetrics();
 
         var service = new MatchOrderService(
             orderRepository,
             energyOfferRepository,
             tradeRepository,
             applyTradeToPositionsService,
-            transactionManager);
+            transactionManager,
+            businessMetrics);
 
         var anotherUserId = Guid.NewGuid();
 
@@ -133,6 +143,7 @@ public class MatchOrderServiceTests
 
         Assert.Equal(0, tradeRepository.AddCallCount);
         Assert.Empty(positionRepository.Positions);
+        Assert.Equal(0, businessMetrics.TradesCompleted);
     }
 
     [Fact]
@@ -150,13 +161,15 @@ public class MatchOrderServiceTests
             new ApplyTradeToPositionsService(positionRepository);
 
         var transactionManager = new FakeTransactionManager();
+        var businessMetrics = new FakeBusinessMetrics();
 
         var service = new MatchOrderService(
             orderRepository,
             energyOfferRepository,
             tradeRepository,
             applyTradeToPositionsService,
-            transactionManager);
+            transactionManager,
+            businessMetrics);
 
         // Act
         var result = await service.ExecuteAsync(
@@ -172,6 +185,7 @@ public class MatchOrderServiceTests
         Assert.Equal(OrderStatus.Open, order.Status);
         Assert.Equal(0, tradeRepository.AddCallCount);
         Assert.Empty(positionRepository.Positions);
+        Assert.Equal(0, businessMetrics.TradesCompleted);
     }
 
     [Fact]
@@ -192,13 +206,15 @@ public class MatchOrderServiceTests
             new ApplyTradeToPositionsService(positionRepository);
 
         var transactionManager = new FakeTransactionManager();
+        var businessMetrics = new FakeBusinessMetrics();
 
         var service = new MatchOrderService(
             orderRepository,
             energyOfferRepository,
             tradeRepository,
             applyTradeToPositionsService,
-            transactionManager);
+            transactionManager,
+            businessMetrics);
 
         // Act & Assert
         await Assert.ThrowsAsync<BusinessRuleException>(
@@ -209,6 +225,7 @@ public class MatchOrderServiceTests
         Assert.Equal(0, tradeRepository.AddCallCount);
         Assert.Empty(positionRepository.Positions);
         Assert.Equal(1, transactionManager.ExecuteCallCount);
+        Assert.Equal(0, businessMetrics.TradesCompleted);
     }
 
     [Fact]
@@ -226,12 +243,15 @@ public class MatchOrderServiceTests
         var transactionManager =
             new ThrowingTransactionManager();
 
+        var businessMetrics = new FakeBusinessMetrics();
+
         var service = new MatchOrderService(
             orderRepository,
             energyOfferRepository,
             tradeRepository,
             applyTradeToPositionsService,
-            transactionManager);
+            transactionManager,
+            businessMetrics);
 
         // Act
         var result = await service.ExecuteAsync(
@@ -243,6 +263,8 @@ public class MatchOrderServiceTests
         Assert.False(result.Matched);
         Assert.Null(result.TradeId);
         Assert.Null(result.EnergyOfferId);
+
+        Assert.Equal(0, businessMetrics.TradesCompleted);
     }
 
     private static Order CreateOrder()
@@ -277,8 +299,7 @@ public class MatchOrderServiceTests
             deliveryEnd);
     }
 
-    private sealed class FakeOrderRepository
-        : IOrderRepository
+    private sealed class FakeOrderRepository : IOrderRepository
     {
         private readonly Order? _order;
 
@@ -399,8 +420,7 @@ public class MatchOrderServiceTests
         }
     }
 
-    private sealed class FakeTradeRepository
-        : ITradeRepository
+    private sealed class FakeTradeRepository : ITradeRepository
     {
         public Trade? AddedTrade { get; private set; }
 
@@ -443,8 +463,7 @@ public class MatchOrderServiceTests
         }
     }
 
-    private sealed class FakePositionRepository
-        : IPositionRepository
+    private sealed class FakePositionRepository : IPositionRepository
     {
         public List<Position> Positions { get; } = [];
 
@@ -487,8 +506,7 @@ public class MatchOrderServiceTests
         }
     }
 
-    private sealed class FakeTransactionManager
-        : ITransactionManager
+    private sealed class FakeTransactionManager : ITransactionManager
     {
         public int ExecuteCallCount { get; private set; }
 
@@ -502,8 +520,7 @@ public class MatchOrderServiceTests
         }
     }
 
-    private sealed class ThrowingTransactionManager
-        : ITransactionManager
+    private sealed class ThrowingTransactionManager : ITransactionManager
     {
         public Task ExecuteAsync(
             Func<CancellationToken, Task> operation,
@@ -511,6 +528,32 @@ public class MatchOrderServiceTests
         {
             throw new ConcurrencyConflictException(
                 "Simulated concurrency conflict.");
+        }
+    }
+
+    private sealed class FakeBusinessMetrics : IBusinessMetrics
+    {
+        public int OrdersCreated { get; private set; }
+        public int EnergyOffersCreated { get; private set; }
+        public int TradesCompleted { get; private set; }
+
+        public void OrderCreated()
+        {
+            OrdersCreated++;
+        }
+
+        public void EnergyOfferCreated()
+        {
+            EnergyOffersCreated++;
+        }
+
+        public void TradeCompleted()
+        {
+            TradesCompleted++;
+        }
+
+        public void RecordOrderMatchingDuration(double milliseconds)
+        {
         }
     }
 }

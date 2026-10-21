@@ -260,7 +260,7 @@ public class EnergyOfferTests
     }
 
     [Fact]
-    public void Close_WhenOfferIsAlreadyClosed_ThrowsInvalidOperationException()
+    public void Close_WhenOfferIsAlreadyClosed_ThrowsBusinessRuleException()
     {
         // Arrange
         var offer = CreateOffer();
@@ -273,7 +273,7 @@ public class EnergyOfferTests
     }
 
     [Fact]
-    public void Cancel_WhenOfferIsAlreadyCancelled_ThrowsInvalidOperationException()
+    public void Cancel_WhenOfferIsAlreadyCancelled_ThrowsBusinessRuleException()
     {
         // Arrange
         var offer = CreateOffer();
@@ -286,7 +286,7 @@ public class EnergyOfferTests
     }
 
     [Fact]
-    public void Cancel_WhenOfferIsClosed_ThrowsInvalidOperationException()
+    public void Cancel_WhenOfferIsClosed_ThrowsBusinessRuleException()
     {
         // Arrange
         var offer = CreateOffer();
@@ -299,7 +299,7 @@ public class EnergyOfferTests
     }
 
     [Fact]
-    public void Close_WhenOfferIsCancelled_ThrowsInvalidOperationException()
+    public void Close_WhenOfferIsCancelled_ThrowsBusinessRuleException()
     {
         // Arrange
         var offer = CreateOffer();
