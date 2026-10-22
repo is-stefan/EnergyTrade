@@ -5,10 +5,10 @@ using EnergyTrade.Domain.Enums;
 
 namespace EnergyTrade.Application.Tests.Orders.GetAll;
 
-public class GetOrdersServiceTests
+public class GetOrdersQueryHandlerTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenOrdersExist_ReturnsOnlyAuthenticatedUserOrders()
+    public async Task Handle_WhenOrdersExist_ReturnsOnlyAuthenticatedUserOrders()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -32,10 +32,14 @@ public class GetOrdersServiceTests
         var repository = new FakeOrderRepository(
             new[] { firstOrder, secondOrder, otherUserOrder });
 
-        var service = new GetOrdersService(repository);
+        var handler = new GetOrdersQueryHandler(repository);
+
+        var query = new GetOrdersQuery(userId);
 
         // Act
-        var result = await service.ExecuteAsync(userId);
+        var result = await handler.Handle(
+            query,
+            CancellationToken.None);
 
         // Assert
         Assert.Equal(2, result.Items.Count);
@@ -48,7 +52,7 @@ public class GetOrdersServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithPagination_ReturnsRequestedPage()
+    public async Task Handle_WithPagination_ReturnsRequestedPage()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -63,13 +67,17 @@ public class GetOrdersServiceTests
         };
 
         var repository = new FakeOrderRepository(orders);
-        var service = new GetOrdersService(repository);
+        var handler = new GetOrdersQueryHandler(repository);
+
+        var query = new GetOrdersQuery(
+            userId,
+            Page: 2,
+            PageSize: 2);
 
         // Act
-        var result = await service.ExecuteAsync(
-            userId,
-            page: 2,
-            pageSize: 2);
+        var result = await handler.Handle(
+            query,
+            CancellationToken.None);
 
         // Assert
         Assert.Equal(2, result.Items.Count);
@@ -82,7 +90,7 @@ public class GetOrdersServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_ReturnsOnlyAuthenticatedUserOrders()
+    public async Task Handle_ReturnsOnlyAuthenticatedUserOrders()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -95,10 +103,14 @@ public class GetOrdersServiceTests
         };
 
         var repository = new FakeOrderRepository(orders);
-        var service = new GetOrdersService(repository);
+        var handler = new GetOrdersQueryHandler(repository);
+
+        var query = new GetOrdersQuery(userId);
 
         // Act
-        var result = await service.ExecuteAsync(userId);
+        var result = await handler.Handle(
+            query,
+            CancellationToken.None);
 
         // Assert
         Assert.Single(result.Items);
@@ -107,7 +119,7 @@ public class GetOrdersServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithEnergyTypeFilter_ReturnsOnlyMatchingOrders()
+    public async Task Handle_WithEnergyTypeFilter_ReturnsOnlyMatchingOrders()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -120,12 +132,16 @@ public class GetOrdersServiceTests
         };
 
         var repository = new FakeOrderRepository(orders);
-        var service = new GetOrdersService(repository);
+        var handler = new GetOrdersQueryHandler(repository);
+
+        var query = new GetOrdersQuery(
+            userId,
+            EnergyType: EnergyType.Wind);
 
         // Act
-        var result = await service.ExecuteAsync(
-            userId,
-            energyType: EnergyType.Wind);
+        var result = await handler.Handle(
+            query,
+            CancellationToken.None);
 
         // Assert
         Assert.Single(result.Items);
@@ -135,43 +151,61 @@ public class GetOrdersServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithEmptyUserId_ThrowsArgumentException()
+    public async Task Handle_WithEmptyUserId_ThrowsArgumentException()
     {
+        // Arrange
         var repository = new FakeOrderRepository(
             Array.Empty<Order>());
 
-        var service = new GetOrdersService(repository);
+        var handler = new GetOrdersQueryHandler(repository);
 
+        var query = new GetOrdersQuery(Guid.Empty);
+
+        // Act + Assert
         await Assert.ThrowsAsync<ArgumentException>(
-            () => service.ExecuteAsync(Guid.Empty));
+            () => handler.Handle(
+                query,
+                CancellationToken.None));
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithInvalidPage_ThrowsArgumentOutOfRangeException()
+    public async Task Handle_WithInvalidPage_ThrowsArgumentOutOfRangeException()
     {
+        // Arrange
         var repository = new FakeOrderRepository(
             Array.Empty<Order>());
 
-        var service = new GetOrdersService(repository);
+        var handler = new GetOrdersQueryHandler(repository);
 
+        var query = new GetOrdersQuery(
+            Guid.NewGuid(),
+            Page: 0);
+
+        // Act + Assert
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => service.ExecuteAsync(
-                Guid.NewGuid(),
-                page: 0));
+            () => handler.Handle(
+                query,
+                CancellationToken.None));
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithInvalidPageSize_ThrowsArgumentOutOfRangeException()
+    public async Task Handle_WithInvalidPageSize_ThrowsArgumentOutOfRangeException()
     {
+        // Arrange
         var repository = new FakeOrderRepository(
             Array.Empty<Order>());
 
-        var service = new GetOrdersService(repository);
+        var handler = new GetOrdersQueryHandler(repository);
 
+        var query = new GetOrdersQuery(
+            Guid.NewGuid(),
+            PageSize: 101);
+
+        // Act + Assert
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => service.ExecuteAsync(
-                Guid.NewGuid(),
-                pageSize: 101));
+            () => handler.Handle(
+                query,
+                CancellationToken.None));
     }
 
     private static Order CreateOrder(

@@ -1,59 +1,56 @@
 using EnergyTrade.Application.Abstractions.Persistence;
-using EnergyTrade.Domain.Enums;
+using MediatR;
 
 namespace EnergyTrade.Application.Orders.GetAll;
 
-public sealed class GetOrdersService
+public sealed class GetOrdersQueryHandler
+    : IRequestHandler<GetOrdersQuery, PagedOrdersResult>
 {
     private readonly IOrderRepository _orderRepository;
 
-    public GetOrdersService(
+    public GetOrdersQueryHandler(
         IOrderRepository orderRepository)
     {
         _orderRepository = orderRepository;
     }
 
-    public async Task<PagedOrdersResult> ExecuteAsync(
-        Guid userId,
-        EnergyType? energyType = null,
-        OrderStatus? status = null,
-        int page = 1,
-        int pageSize = 10,
-        CancellationToken cancellationToken = default)
+    public async Task<PagedOrdersResult> Handle(
+        GetOrdersQuery query,
+        CancellationToken cancellationToken)
     {
-        if (userId == Guid.Empty)
+        if (query.UserId == Guid.Empty)
         {
             throw new ArgumentException(
                 "User id cannot be empty.",
-                nameof(userId));
+                nameof(query.UserId));
         }
 
-        if (page < 1)
+        if (query.Page < 1)
         {
             throw new ArgumentOutOfRangeException(
-                nameof(page),
+                nameof(query.Page),
                 "Page must be greater than 0.");
         }
 
-        if (pageSize < 1 || pageSize > 100)
+        if (query.PageSize < 1 || query.PageSize > 100)
         {
             throw new ArgumentOutOfRangeException(
-                nameof(pageSize),
+                nameof(query.PageSize),
                 "Page size must be between 1 and 100.");
         }
 
         var orders = await _orderRepository.GetAllAsync(
-            userId,
-            energyType,
-            status,
-            page,
-            pageSize,
+            query.UserId,
+            query.EnergyType,
+            query.Status,
+            query.Page,
+            query.PageSize,
             cancellationToken);
 
         var totalCount = await _orderRepository.CountAsync(
-            userId,
-            energyType,
-            status,
+            query.UserId,
+            query.EnergyType,
+            query.Status,
             cancellationToken);
 
         var items = orders
@@ -73,8 +70,8 @@ public sealed class GetOrdersService
 
         return new PagedOrdersResult(
             items,
-            page,
-            pageSize,
+            query.Page,
+            query.PageSize,
             totalCount);
     }
 }
