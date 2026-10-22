@@ -1,8 +1,9 @@
 using EnergyTrade.Application.Common.Exceptions;
-using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
 using EnergyTrade.Domain.Common.Exceptions;
 using EnergyTrade.Api.Observability;
+using FluentValidation;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
 
 namespace EnergyTrade.Api.ExceptionHandling;
 
@@ -24,6 +25,9 @@ public sealed class GlobalExceptionHandler
     {
         var statusCode = exception switch
         {
+            ValidationException =>
+                StatusCodes.Status400BadRequest,
+
             UnauthorizedException =>
                 StatusCodes.Status401Unauthorized,
 
@@ -49,25 +53,31 @@ public sealed class GlobalExceptionHandler
                 StatusCodes.Status500InternalServerError
         };
 
-        var title = statusCode switch
+        var title = exception switch
         {
-            StatusCodes.Status400BadRequest =>
-                "Invalid request",
+            ValidationException =>
+                "Validation failed",
 
-            StatusCodes.Status401Unauthorized =>
-                "Unauthorized",
+            _ => statusCode switch
+            {
+                StatusCodes.Status400BadRequest =>
+                    "Invalid request",
 
-            StatusCodes.Status403Forbidden =>
-                "Forbidden",
+                StatusCodes.Status401Unauthorized =>
+                    "Unauthorized",
 
-            StatusCodes.Status404NotFound =>
-                "Not found",
+                StatusCodes.Status403Forbidden =>
+                    "Forbidden",
 
-            StatusCodes.Status409Conflict =>
-                "Conflict",
+                StatusCodes.Status404NotFound =>
+                    "Not found",
 
-            _ =>
-                "Internal server error"
+                StatusCodes.Status409Conflict =>
+                    "Conflict",
+
+                _ =>
+                    "Internal server error"
+            }
         };
 
         if (statusCode >= 500)
@@ -88,9 +98,18 @@ public sealed class GlobalExceptionHandler
                 httpContext.TraceIdentifier);
         }
 
-        var detail = statusCode == StatusCodes.Status500InternalServerError
-            ? "An unexpected error occurred."
-            : exception.Message;
+        var detail = exception switch
+        {
+            ValidationException =>
+                "One or more validation errors occurred.",
+
+            _ when statusCode ==
+                StatusCodes.Status500InternalServerError =>
+                "An unexpected error occurred.",
+
+            _ =>
+                exception.Message
+        };
 
         var correlationId =
             httpContext.Items.TryGetValue(
@@ -114,7 +133,20 @@ public sealed class GlobalExceptionHandler
         {
             problemDetails.Extensions["correlationId"] =
                 correlationId;
-        }   
+        }
+
+        if (exception is ValidationException validationException)
+        {
+            problemDetails.Extensions["errors"] =
+                validationException.Errors
+                    .GroupBy(error => error.PropertyName)
+                    .ToDictionary(
+                        group => group.Key,
+                        group => group
+                            .Select(error => error.ErrorMessage)
+                            .Distinct()
+                            .ToArray());
+        }
 
         httpContext.Response.StatusCode = statusCode;
 
