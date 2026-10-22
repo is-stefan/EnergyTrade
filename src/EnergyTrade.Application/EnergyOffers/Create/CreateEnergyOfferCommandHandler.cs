@@ -3,16 +3,18 @@ using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
+using MediatR;
 
 namespace EnergyTrade.Application.EnergyOffers.Create;
 
-public sealed class CreateEnergyOfferService
+public sealed class CreateEnergyOfferCommandHandler
+    : IRequestHandler<CreateEnergyOfferCommand, CreateEnergyOfferResult>
 {
     private readonly IEnergyOfferRepository _energyOfferRepository;
     private readonly IPortfolioRepository _portfolioRepository;
     private readonly IBusinessMetrics _businessMetrics;
 
-    public CreateEnergyOfferService(
+    public CreateEnergyOfferCommandHandler(
         IEnergyOfferRepository energyOfferRepository,
         IPortfolioRepository portfolioRepository,
         IBusinessMetrics businessMetrics)
@@ -22,20 +24,19 @@ public sealed class CreateEnergyOfferService
         _businessMetrics = businessMetrics;
     }
 
-    public async Task<CreateEnergyOfferResult> ExecuteAsync(
-        Guid userId,
-        CreateEnergyOfferRequest request,
-        CancellationToken cancellationToken = default)
+    public async Task<CreateEnergyOfferResult> Handle(
+        CreateEnergyOfferCommand command,
+        CancellationToken cancellationToken)
     {
-        if (userId == Guid.Empty)
+        if (command.UserId == Guid.Empty)
         {
             throw new ArgumentException(
                 "User id cannot be empty.",
-                nameof(userId));
+                nameof(command.UserId));
         }
 
         var portfolio = await _portfolioRepository.GetByIdAsync(
-            request.PortfolioId,
+            command.PortfolioId,
             cancellationToken);
 
         if (portfolio is null)
@@ -44,7 +45,7 @@ public sealed class CreateEnergyOfferService
                 "Portfolio does not exist.");
         }
 
-        if (portfolio.UserId != userId)
+        if (portfolio.UserId != command.UserId)
         {
             throw new ForbiddenException(
                 "The portfolio does not belong to the authenticated user.");
@@ -57,14 +58,14 @@ public sealed class CreateEnergyOfferService
         }
 
         var energyOffer = new EnergyOffer(
-            userId,
-            request.PortfolioId,
-            request.EnergyType,
-            request.QuantityMWh,
-            request.PricePerMWh,
-            request.Currency,
-            request.DeliveryStart,
-            request.DeliveryEnd);
+            command.UserId,
+            command.PortfolioId,
+            command.EnergyType,
+            command.QuantityMWh,
+            command.PricePerMWh,
+            command.Currency,
+            command.DeliveryStart,
+            command.DeliveryEnd);
 
         await _energyOfferRepository.AddAsync(
             energyOffer,

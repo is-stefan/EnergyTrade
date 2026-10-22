@@ -1,92 +1,85 @@
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Common.Exceptions;
-using EnergyTrade.Application.EnergyOffers.Close;
+using EnergyTrade.Application.EnergyOffers.GetById;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
-using EnergyTrade.Domain.Common.Exceptions;
 
-namespace EnergyTrade.Application.Tests.EnergyOffers.Close;
+namespace EnergyTrade.Application.Tests.EnergyOffers.GetById;
 
-public class CloseEnergyOfferServiceTests
+public class GetEnergyOfferByIdQueryHandlerTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenOfferExistsAndBelongsToUser_ClosesOfferAndSavesChanges()
+    public async Task Handle_WhenOfferExistsAndBelongsToUser_ReturnsOffer()
     {
         // Arrange
         var offer = CreateValidOffer();
         var repository = new FakeEnergyOfferRepository(offer);
-        var service = new CloseEnergyOfferService(repository);
+        var handler = new GetEnergyOfferByIdQueryHandler(repository);
 
-        // Act
-        var result = await service.ExecuteAsync(
+        var query = new GetEnergyOfferByIdQuery(
             offer.SellerId,
             offer.Id);
 
+        // Act
+        var result = await handler.Handle(
+            query,
+            CancellationToken.None);
+
         // Assert
-        Assert.True(result);
-        Assert.Equal(OfferStatus.Closed, offer.Status);
-        Assert.NotNull(offer.UpdatedAt);
-        Assert.Equal(1, repository.SaveChangesCallCount);
+        Assert.NotNull(result);
+        Assert.Equal(offer.Id, result.Id);
+        Assert.Equal(offer.SellerId, result.SellerId);
+        Assert.Equal(offer.EnergyType, result.EnergyType);
+        Assert.Equal(offer.QuantityMWh, result.QuantityMWh);
+        Assert.Equal(offer.PricePerMWh, result.PricePerMWh);
+        Assert.Equal(offer.Currency, result.Currency);
+        Assert.Equal(offer.Status, result.Status);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenOfferDoesNotExist_ReturnsFalse()
+    public async Task Handle_WhenOfferDoesNotExist_ReturnsNull()
     {
         // Arrange
         var repository = new FakeEnergyOfferRepository(null);
-        var service = new CloseEnergyOfferService(repository);
+        var handler = new GetEnergyOfferByIdQueryHandler(repository);
 
-        // Act
-        var result = await service.ExecuteAsync(
+        var query = new GetEnergyOfferByIdQuery(
             Guid.NewGuid(),
             Guid.NewGuid());
 
+        // Act
+        var result = await handler.Handle(
+            query,
+            CancellationToken.None);
+
         // Assert
-        Assert.False(result);
-        Assert.Equal(0, repository.SaveChangesCallCount);
+        Assert.Null(result);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenOfferBelongsToAnotherUser_ThrowsForbiddenException()
+    public async Task Handle_WhenOfferBelongsToAnotherUser_ThrowsForbiddenException()
     {
         // Arrange
         var offer = CreateValidOffer();
         var repository = new FakeEnergyOfferRepository(offer);
-        var service = new CloseEnergyOfferService(repository);
+        var handler = new GetEnergyOfferByIdQueryHandler(repository);
 
         var anotherUserId = Guid.NewGuid();
 
+        var query = new GetEnergyOfferByIdQuery(
+            anotherUserId,
+            offer.Id);
+
         // Act
         var exception = await Assert.ThrowsAsync<ForbiddenException>(
-            () => service.ExecuteAsync(
-                anotherUserId,
-                offer.Id));
+            () => handler.Handle(
+                query,
+                CancellationToken.None));
 
         // Assert
         Assert.Equal(
             "The energy offer does not belong to the authenticated user.",
             exception.Message);
-
-        Assert.Equal(0, repository.SaveChangesCallCount);
-    }
-
-    [Fact]
-    public async Task ExecuteAsync_WhenOfferIsAlreadyClosed_ThrowsBusinessRuleException()
-    {
-        // Arrange
-        var offer = CreateValidOffer();
-        offer.Close();
-
-        var repository = new FakeEnergyOfferRepository(offer);
-        var service = new CloseEnergyOfferService(repository);
-
-        // Act & Assert
-        await Assert.ThrowsAsync<BusinessRuleException>(
-            () => service.ExecuteAsync(
-                offer.SellerId,
-                offer.Id));
-
-        Assert.Equal(0, repository.SaveChangesCallCount);
     }
 
     private static EnergyOffer CreateValidOffer()
@@ -109,8 +102,6 @@ public class CloseEnergyOfferServiceTests
         : IEnergyOfferRepository
     {
         private readonly EnergyOffer? _offer;
-
-        public int SaveChangesCallCount { get; private set; }
 
         public FakeEnergyOfferRepository(EnergyOffer? offer)
         {
@@ -160,7 +151,6 @@ public class CloseEnergyOfferServiceTests
         public Task SaveChangesAsync(
             CancellationToken cancellationToken = default)
         {
-            SaveChangesCallCount++;
             return Task.CompletedTask;
         }
 

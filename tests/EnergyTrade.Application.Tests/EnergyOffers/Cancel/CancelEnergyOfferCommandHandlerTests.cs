@@ -1,67 +1,53 @@
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Common.Exceptions;
-using EnergyTrade.Application.EnergyOffers.Update;
+using EnergyTrade.Application.EnergyOffers.Close;
+using EnergyTrade.Domain.Common.Exceptions;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
-using EnergyTrade.Domain.Common.Exceptions;
 
-namespace EnergyTrade.Application.Tests.EnergyOffers.Update;
+namespace EnergyTrade.Application.Tests.EnergyOffers.Close;
 
-public class UpdateEnergyOfferServiceTests
+public class CloseEnergyOfferCommandHandlerTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenOfferExistsAndBelongsToUser_UpdatesOfferAndSavesChanges()
+    public async Task Handle_WhenOfferExistsAndBelongsToUser_ClosesOfferAndSavesChanges()
     {
         // Arrange
         var offer = CreateValidOffer();
         var repository = new FakeEnergyOfferRepository(offer);
-        var service = new UpdateEnergyOfferService(repository);
+        var handler = new CloseEnergyOfferCommandHandler(repository);
 
-        var newDeliveryStart = DateTimeOffset.UtcNow.AddDays(10);
-        var newDeliveryEnd = newDeliveryStart.AddDays(20);
-
-        var request = new UpdateEnergyOfferRequest(
-            EnergyType.Wind,
-            300m,
-            95m,
-            Currency.USD,
-            newDeliveryStart,
-            newDeliveryEnd);
+        var command = new CloseEnergyOfferCommand(
+            offer.SellerId,
+            offer.Id);
 
         // Act
-        var result = await service.ExecuteAsync(
-            offer.SellerId,
-            offer.Id,
-            request);
+        var result = await handler.Handle(
+            command,
+            CancellationToken.None);
 
         // Assert
         Assert.True(result);
-
-        Assert.Equal(EnergyType.Wind, offer.EnergyType);
-        Assert.Equal(300m, offer.QuantityMWh);
-        Assert.Equal(95m, offer.PricePerMWh);
-        Assert.Equal(Currency.USD, offer.Currency);
-        Assert.Equal(newDeliveryStart, offer.DeliveryStart);
-        Assert.Equal(newDeliveryEnd, offer.DeliveryEnd);
+        Assert.Equal(OfferStatus.Closed, offer.Status);
         Assert.NotNull(offer.UpdatedAt);
-
         Assert.Equal(1, repository.SaveChangesCallCount);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenOfferDoesNotExist_ReturnsFalse()
+    public async Task Handle_WhenOfferDoesNotExist_ReturnsFalse()
     {
         // Arrange
         var repository = new FakeEnergyOfferRepository(null);
-        var service = new UpdateEnergyOfferService(repository);
+        var handler = new CloseEnergyOfferCommandHandler(repository);
 
-        var request = CreateValidRequest();
+        var command = new CloseEnergyOfferCommand(
+            Guid.NewGuid(),
+            Guid.NewGuid());
 
         // Act
-        var result = await service.ExecuteAsync(
-            Guid.NewGuid(),
-            Guid.NewGuid(),
-            request);
+        var result = await handler.Handle(
+            command,
+            CancellationToken.None);
 
         // Assert
         Assert.False(result);
@@ -69,22 +55,24 @@ public class UpdateEnergyOfferServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenOfferBelongsToAnotherUser_ThrowsForbiddenException()
+    public async Task Handle_WhenOfferBelongsToAnotherUser_ThrowsForbiddenException()
     {
         // Arrange
         var offer = CreateValidOffer();
         var repository = new FakeEnergyOfferRepository(offer);
-        var service = new UpdateEnergyOfferService(repository);
+        var handler = new CloseEnergyOfferCommandHandler(repository);
 
-        var request = CreateValidRequest();
         var anotherUserId = Guid.NewGuid();
+
+        var command = new CloseEnergyOfferCommand(
+            anotherUserId,
+            offer.Id);
 
         // Act
         var exception = await Assert.ThrowsAsync<ForbiddenException>(
-            () => service.ExecuteAsync(
-                anotherUserId,
-                offer.Id,
-                request));
+            () => handler.Handle(
+                command,
+                CancellationToken.None));
 
         // Assert
         Assert.Equal(
@@ -95,49 +83,24 @@ public class UpdateEnergyOfferServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithInvalidQuantity_ThrowsArgumentOutOfRangeException()
-    {
-        // Arrange
-        var offer = CreateValidOffer();
-        var repository = new FakeEnergyOfferRepository(offer);
-        var service = new UpdateEnergyOfferService(repository);
-
-        var request = new UpdateEnergyOfferRequest(
-            EnergyType.Solar,
-            0m,
-            80m,
-            Currency.EUR,
-            DateTimeOffset.UtcNow.AddDays(1),
-            DateTimeOffset.UtcNow.AddDays(30));
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => service.ExecuteAsync(
-                offer.SellerId,
-                offer.Id,
-                request));
-
-        Assert.Equal(0, repository.SaveChangesCallCount);
-    }
-
-    [Fact]
-    public async Task ExecuteAsync_WhenOfferIsClosed_ThrowsBusinessRuleException()
+    public async Task Handle_WhenOfferIsAlreadyClosed_ThrowsBusinessRuleException()
     {
         // Arrange
         var offer = CreateValidOffer();
         offer.Close();
 
         var repository = new FakeEnergyOfferRepository(offer);
-        var service = new UpdateEnergyOfferService(repository);
+        var handler = new CloseEnergyOfferCommandHandler(repository);
 
-        var request = CreateValidRequest();
+        var command = new CloseEnergyOfferCommand(
+            offer.SellerId,
+            offer.Id);
 
         // Act & Assert
         await Assert.ThrowsAsync<BusinessRuleException>(
-            () => service.ExecuteAsync(
-                offer.SellerId,
-                offer.Id,
-                request));
+            () => handler.Handle(
+                command,
+                CancellationToken.None));
 
         Assert.Equal(0, repository.SaveChangesCallCount);
     }
@@ -153,20 +116,6 @@ public class UpdateEnergyOfferServiceTests
             EnergyType.Solar,
             100m,
             80m,
-            Currency.EUR,
-            deliveryStart,
-            deliveryEnd);
-    }
-
-    private static UpdateEnergyOfferRequest CreateValidRequest()
-    {
-        var deliveryStart = DateTimeOffset.UtcNow.AddDays(5);
-        var deliveryEnd = deliveryStart.AddDays(20);
-
-        return new UpdateEnergyOfferRequest(
-            EnergyType.Wind,
-            200m,
-            90m,
             Currency.EUR,
             deliveryStart,
             deliveryEnd);

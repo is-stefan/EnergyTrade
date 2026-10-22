@@ -1,59 +1,56 @@
 using EnergyTrade.Application.Abstractions.Persistence;
-using EnergyTrade.Domain.Enums;
+using MediatR;
 
 namespace EnergyTrade.Application.EnergyOffers.GetAll;
 
-public sealed class GetEnergyOffersService
+public sealed class GetEnergyOffersQueryHandler
+    : IRequestHandler<GetEnergyOffersQuery, PagedEnergyOffersResult>
 {
     private readonly IEnergyOfferRepository _energyOfferRepository;
 
-    public GetEnergyOffersService(
+    public GetEnergyOffersQueryHandler(
         IEnergyOfferRepository energyOfferRepository)
     {
         _energyOfferRepository = energyOfferRepository;
     }
 
-    public async Task<PagedEnergyOffersResult> ExecuteAsync(
-        Guid userId,
-        OfferStatus? status = null,
-        EnergyType? energyType = null,
-        int page = 1,
-        int pageSize = 10,
-        CancellationToken cancellationToken = default)
+    public async Task<PagedEnergyOffersResult> Handle(
+        GetEnergyOffersQuery query,
+        CancellationToken cancellationToken)
     {
-        if (userId == Guid.Empty)
+        if (query.UserId == Guid.Empty)
         {
             throw new ArgumentException(
                 "User id cannot be empty.",
-                nameof(userId));
+                nameof(query.UserId));
         }
 
-        if (page < 1)
+        if (query.Page < 1)
         {
             throw new ArgumentOutOfRangeException(
-                nameof(page),
+                nameof(query.Page),
                 "Page must be greater than 0.");
         }
 
-        if (pageSize < 1 || pageSize > 100)
+        if (query.PageSize < 1 || query.PageSize > 100)
         {
             throw new ArgumentOutOfRangeException(
-                nameof(pageSize),
+                nameof(query.PageSize),
                 "Page size must be between 1 and 100.");
         }
 
         var offers = await _energyOfferRepository.GetAllAsync(
-            userId,
-            status,
-            energyType,
-            page,
-            pageSize,
+            query.UserId,
+            query.Status,
+            query.EnergyType,
+            query.Page,
+            query.PageSize,
             cancellationToken);
 
         var totalCount = await _energyOfferRepository.CountAsync(
-            userId,
-            status,
-            energyType,
+            query.UserId,
+            query.Status,
+            query.EnergyType,
             cancellationToken);
 
         var items = offers
@@ -73,8 +70,8 @@ public sealed class GetEnergyOffersService
 
         return new PagedEnergyOffersResult(
             items,
-            page,
-            pageSize,
+            query.Page,
+            query.PageSize,
             totalCount);
     }
 }

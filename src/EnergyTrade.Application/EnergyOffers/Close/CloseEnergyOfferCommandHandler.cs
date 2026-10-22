@@ -1,26 +1,26 @@
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Common.Exceptions;
+using MediatR;
 
-namespace EnergyTrade.Application.EnergyOffers.Update;
+namespace EnergyTrade.Application.EnergyOffers.Close;
 
-public sealed class UpdateEnergyOfferService
+public sealed class CloseEnergyOfferCommandHandler
+    : IRequestHandler<CloseEnergyOfferCommand, bool>
 {
     private readonly IEnergyOfferRepository _energyOfferRepository;
 
-    public UpdateEnergyOfferService(
+    public CloseEnergyOfferCommandHandler(
         IEnergyOfferRepository energyOfferRepository)
     {
         _energyOfferRepository = energyOfferRepository;
     }
 
-    public async Task<bool> ExecuteAsync(
-        Guid userId,
-        Guid id,
-        UpdateEnergyOfferRequest request,
-        CancellationToken cancellationToken = default)
+    public async Task<bool> Handle(
+        CloseEnergyOfferCommand command,
+        CancellationToken cancellationToken)
     {
         var offer = await _energyOfferRepository.GetByIdAsync(
-            id,
+            command.EnergyOfferId,
             cancellationToken);
 
         if (offer is null)
@@ -28,19 +28,13 @@ public sealed class UpdateEnergyOfferService
             return false;
         }
 
-        if (offer.SellerId != userId)
+        if (offer.SellerId != command.UserId)
         {
             throw new ForbiddenException(
                 "The energy offer does not belong to the authenticated user.");
         }
 
-        offer.Update(
-            request.EnergyType,
-            request.QuantityMWh,
-            request.PricePerMWh,
-            request.Currency,
-            request.DeliveryStart,
-            request.DeliveryEnd);
+        offer.Close();
 
         await _energyOfferRepository.SaveChangesAsync(
             cancellationToken);

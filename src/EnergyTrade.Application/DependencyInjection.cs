@@ -34,17 +34,8 @@ public static class DependencyInjection
         services.AddMediatR(config =>
             config.RegisterServicesFromAssemblyContaining<CreateOrderCommandHandler>());
 
-        services.AddScoped<CreateEnergyOfferService>();
-        services.AddScoped<GetEnergyOfferByIdService>();
-        services.AddScoped<GetEnergyOffersService>();
-        services.AddScoped<CancelEnergyOfferService>();
-        services.AddScoped<CloseEnergyOfferService>();
-        services.AddScoped<UpdateEnergyOfferService>();
-
         services.AddScoped<GetTradeByIdService>();
         services.AddScoped<GetTradesService>();
-
-        services.AddScoped<MatchOrderService>();
 
         services.AddScoped<ApplyTradeToPositionsService>();
         services.AddScoped<GetPositionsByPortfolioService>();

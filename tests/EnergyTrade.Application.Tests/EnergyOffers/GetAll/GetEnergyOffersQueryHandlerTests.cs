@@ -5,10 +5,10 @@ using EnergyTrade.Domain.Enums;
 
 namespace EnergyTrade.Application.Tests.EnergyOffers.GetAll;
 
-public class GetEnergyOffersServiceTests
+public class GetEnergyOffersQueryHandlerTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenOffersExist_ReturnsOnlyAuthenticatedUserOffers()
+    public async Task Handle_WhenOffersExist_ReturnsOnlyAuthenticatedUserOffers()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -32,10 +32,14 @@ public class GetEnergyOffersServiceTests
         var repository = new FakeEnergyOfferRepository(
             new[] { firstOffer, secondOffer, otherUserOffer });
 
-        var service = new GetEnergyOffersService(repository);
+        var handler = new GetEnergyOffersQueryHandler(repository);
+
+        var query = new GetEnergyOffersQuery(userId);
 
         // Act
-        var result = await service.ExecuteAsync(userId);
+        var result = await handler.Handle(
+            query,
+            CancellationToken.None);
 
         // Assert
         Assert.Equal(2, result.Items.Count);
@@ -52,7 +56,7 @@ public class GetEnergyOffersServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenNoOffersExist_ReturnsEmptyList()
+    public async Task Handle_WhenNoOffersExist_ReturnsEmptyList()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -60,10 +64,14 @@ public class GetEnergyOffersServiceTests
         var repository = new FakeEnergyOfferRepository(
             Array.Empty<EnergyOffer>());
 
-        var service = new GetEnergyOffersService(repository);
+        var handler = new GetEnergyOffersQueryHandler(repository);
+
+        var query = new GetEnergyOffersQuery(userId);
 
         // Act
-        var result = await service.ExecuteAsync(userId);
+        var result = await handler.Handle(
+            query,
+            CancellationToken.None);
 
         // Assert
         Assert.Empty(result.Items);
@@ -73,7 +81,7 @@ public class GetEnergyOffersServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithPagination_ReturnsRequestedPage()
+    public async Task Handle_WithPagination_ReturnsRequestedPage()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -88,13 +96,17 @@ public class GetEnergyOffersServiceTests
         };
 
         var repository = new FakeEnergyOfferRepository(offers);
-        var service = new GetEnergyOffersService(repository);
+        var handler = new GetEnergyOffersQueryHandler(repository);
+
+        var query = new GetEnergyOffersQuery(
+            userId,
+            Page: 2,
+            PageSize: 2);
 
         // Act
-        var result = await service.ExecuteAsync(
-            userId,
-            page: 2,
-            pageSize: 2);
+        var result = await handler.Handle(
+            query,
+            CancellationToken.None);
 
         // Assert
         Assert.Equal(2, result.Items.Count);
@@ -107,7 +119,7 @@ public class GetEnergyOffersServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithEnergyTypeFilter_ReturnsOnlyMatchingOffers()
+    public async Task Handle_WithEnergyTypeFilter_ReturnsOnlyMatchingOffers()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -120,12 +132,16 @@ public class GetEnergyOffersServiceTests
         };
 
         var repository = new FakeEnergyOfferRepository(offers);
-        var service = new GetEnergyOffersService(repository);
+        var handler = new GetEnergyOffersQueryHandler(repository);
+
+        var query = new GetEnergyOffersQuery(
+            userId,
+            EnergyType: EnergyType.Wind);
 
         // Act
-        var result = await service.ExecuteAsync(
-            userId,
-            energyType: EnergyType.Wind);
+        var result = await handler.Handle(
+            query,
+            CancellationToken.None);
 
         // Assert
         Assert.Single(result.Items);
@@ -135,49 +151,61 @@ public class GetEnergyOffersServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithEmptyUserId_ThrowsArgumentException()
+    public async Task Handle_WithEmptyUserId_ThrowsArgumentException()
     {
         // Arrange
         var repository = new FakeEnergyOfferRepository(
             Array.Empty<EnergyOffer>());
 
-        var service = new GetEnergyOffersService(repository);
+        var handler = new GetEnergyOffersQueryHandler(repository);
+
+        var query = new GetEnergyOffersQuery(Guid.Empty);
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(
-            () => service.ExecuteAsync(Guid.Empty));
+            () => handler.Handle(
+                query,
+                CancellationToken.None));
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithInvalidPage_ThrowsArgumentOutOfRangeException()
+    public async Task Handle_WithInvalidPage_ThrowsArgumentOutOfRangeException()
     {
         // Arrange
         var repository = new FakeEnergyOfferRepository(
             Array.Empty<EnergyOffer>());
 
-        var service = new GetEnergyOffersService(repository);
+        var handler = new GetEnergyOffersQueryHandler(repository);
+
+        var query = new GetEnergyOffersQuery(
+            Guid.NewGuid(),
+            Page: 0);
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => service.ExecuteAsync(
-                Guid.NewGuid(),
-                page: 0));
+            () => handler.Handle(
+                query,
+                CancellationToken.None));
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithInvalidPageSize_ThrowsArgumentOutOfRangeException()
+    public async Task Handle_WithInvalidPageSize_ThrowsArgumentOutOfRangeException()
     {
         // Arrange
         var repository = new FakeEnergyOfferRepository(
             Array.Empty<EnergyOffer>());
 
-        var service = new GetEnergyOffersService(repository);
+        var handler = new GetEnergyOffersQueryHandler(repository);
+
+        var query = new GetEnergyOffersQuery(
+            Guid.NewGuid(),
+            PageSize: 101);
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => service.ExecuteAsync(
-                Guid.NewGuid(),
-                pageSize: 101));
+            () => handler.Handle(
+                query,
+                CancellationToken.None));
     }
 
     private static EnergyOffer CreateOffer(

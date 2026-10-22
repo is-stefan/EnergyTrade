@@ -1,13 +1,15 @@
+using System.Diagnostics;
 using EnergyTrade.Application.Abstractions.Observability;
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.Positions.ApplyTrade;
 using EnergyTrade.Domain.Entities;
-using System.Diagnostics;
+using MediatR;
 
 namespace EnergyTrade.Application.Orders.Match;
 
-public sealed class MatchOrderService
+public sealed class MatchOrderCommandHandler
+    : IRequestHandler<MatchOrderCommand, MatchOrderResult?>
 {
     private readonly IOrderRepository _orderRepository;
     private readonly IEnergyOfferRepository _energyOfferRepository;
@@ -16,7 +18,7 @@ public sealed class MatchOrderService
     private readonly ITransactionManager _transactionManager;
     private readonly IBusinessMetrics _businessMetrics;
 
-    public MatchOrderService(
+    public MatchOrderCommandHandler(
         IOrderRepository orderRepository,
         IEnergyOfferRepository energyOfferRepository,
         ITradeRepository tradeRepository,
@@ -32,11 +34,9 @@ public sealed class MatchOrderService
         _businessMetrics = businessMetrics;
     }
 
-    
-    public async Task<MatchOrderResult?> ExecuteAsync(
-        Guid userId,
-        Guid orderId,
-        CancellationToken cancellationToken = default)
+    public async Task<MatchOrderResult?> Handle(
+        MatchOrderCommand command,
+        CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
 
@@ -49,7 +49,7 @@ public sealed class MatchOrderService
                 async transactionCancellationToken =>
                 {
                     var order = await _orderRepository.GetByIdAsync(
-                        orderId,
+                        command.OrderId,
                         transactionCancellationToken);
 
                     if (order is null)
@@ -58,7 +58,7 @@ public sealed class MatchOrderService
                         return;
                     }
 
-                    if (order.BuyerId != userId)
+                    if (order.BuyerId != command.UserId)
                     {
                         throw new ForbiddenException(
                             "The order does not belong to the authenticated user.");
