@@ -1,25 +1,26 @@
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Common.Exceptions;
+using MediatR;
 
 namespace EnergyTrade.Application.Portfolios.GetById;
 
-public sealed class GetPortfolioByIdService
+public sealed class GetPortfolioByIdQueryHandler
+    : IRequestHandler<GetPortfolioByIdQuery, GetPortfolioByIdResult?>
 {
     private readonly IPortfolioRepository _portfolioRepository;
 
-    public GetPortfolioByIdService(
+    public GetPortfolioByIdQueryHandler(
         IPortfolioRepository portfolioRepository)
     {
         _portfolioRepository = portfolioRepository;
     }
 
-    public async Task<GetPortfolioByIdResult?> ExecuteAsync(
-        Guid userId,
-        Guid id,
-        CancellationToken cancellationToken = default)
+    public async Task<GetPortfolioByIdResult?> Handle(
+        GetPortfolioByIdQuery query,
+        CancellationToken cancellationToken)
     {
         var portfolio = await _portfolioRepository.GetByIdAsync(
-            id,
+            query.PortfolioId,
             cancellationToken);
 
         if (portfolio is null)
@@ -27,7 +28,7 @@ public sealed class GetPortfolioByIdService
             return null;
         }
 
-        if (portfolio.UserId != userId)
+        if (portfolio.UserId != query.UserId)
         {
             throw new ForbiddenException(
                 "The portfolio does not belong to the authenticated user.");

@@ -4,6 +4,7 @@ using EnergyTrade.Application.Portfolios.Create;
 using EnergyTrade.Application.Portfolios.GetById;
 using EnergyTrade.Application.Portfolios.GetByUser;
 using EnergyTrade.Application.Portfolios.Rename;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,26 +15,14 @@ namespace EnergyTrade.Api.Controllers;
 [Authorize]
 public class PortfoliosController : ControllerBase
 {
-    private readonly CreatePortfolioService _createPortfolioService;
-    private readonly GetPortfolioByIdService _getPortfolioByIdService;
-    private readonly GetPortfoliosByUserService _getPortfoliosByUserService;
-    private readonly RenamePortfolioService _renamePortfolioService;
-    private readonly ClosePortfolioService _closePortfolioService;
+    private readonly ISender _sender;
     private readonly ICurrentUserService _currentUserService;
 
     public PortfoliosController(
-        CreatePortfolioService createPortfolioService,
-        GetPortfolioByIdService getPortfolioByIdService,
-        GetPortfoliosByUserService getPortfoliosByUserService,
-        RenamePortfolioService renamePortfolioService,
-        ClosePortfolioService closePortfolioService,
+        ISender sender,
         ICurrentUserService currentUserService)
     {
-        _createPortfolioService = createPortfolioService;
-        _getPortfolioByIdService = getPortfolioByIdService;
-        _getPortfoliosByUserService = getPortfoliosByUserService;
-        _renamePortfolioService = renamePortfolioService;
-        _closePortfolioService = closePortfolioService;
+        _sender = sender;
         _currentUserService = currentUserService;
     }
 
@@ -44,9 +33,10 @@ public class PortfoliosController : ControllerBase
     {
         var userId = _currentUserService.UserId;
 
-        var result = await _createPortfolioService.ExecuteAsync(
-            userId,
-            request,
+        var result = await _sender.Send(
+            CreatePortfolioCommand.FromRequest(
+                userId,
+                request),
             cancellationToken);
 
         return CreatedAtAction(
@@ -62,9 +52,10 @@ public class PortfoliosController : ControllerBase
     {
         var userId = _currentUserService.UserId;
 
-        var result = await _getPortfolioByIdService.ExecuteAsync(
-            userId,
-            id,
+        var result = await _sender.Send(
+            new GetPortfolioByIdQuery(
+                userId,
+                id),
             cancellationToken);
 
         if (result is null)
@@ -81,8 +72,8 @@ public class PortfoliosController : ControllerBase
     {
         var userId = _currentUserService.UserId;
 
-        var result = await _getPortfoliosByUserService.ExecuteAsync(
-            userId,
+        var result = await _sender.Send(
+            new GetPortfoliosByUserQuery(userId),
             cancellationToken);
 
         return Ok(result);
@@ -96,10 +87,11 @@ public class PortfoliosController : ControllerBase
     {
         var userId = _currentUserService.UserId;
 
-        var result = await _renamePortfolioService.ExecuteAsync(
-            userId,
-            id,
-            request,
+        var result = await _sender.Send(
+            RenamePortfolioCommand.FromRequest(
+                userId,
+                id,
+                request),
             cancellationToken);
 
         if (!result)
@@ -117,9 +109,10 @@ public class PortfoliosController : ControllerBase
     {
         var userId = _currentUserService.UserId;
 
-        var result = await _closePortfolioService.ExecuteAsync(
-            userId,
-            id,
+        var result = await _sender.Send(
+            new ClosePortfolioCommand(
+                userId,
+                id),
             cancellationToken);
 
         if (!result)

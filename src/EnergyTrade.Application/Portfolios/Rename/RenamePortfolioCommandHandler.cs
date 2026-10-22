@@ -1,25 +1,26 @@
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Common.Exceptions;
+using MediatR;
 
-namespace EnergyTrade.Application.Portfolios.Close;
+namespace EnergyTrade.Application.Portfolios.Rename;
 
-public sealed class ClosePortfolioService
+public sealed class RenamePortfolioCommandHandler
+    : IRequestHandler<RenamePortfolioCommand, bool>
 {
     private readonly IPortfolioRepository _portfolioRepository;
 
-    public ClosePortfolioService(
+    public RenamePortfolioCommandHandler(
         IPortfolioRepository portfolioRepository)
     {
         _portfolioRepository = portfolioRepository;
     }
 
-    public async Task<bool> ExecuteAsync(
-        Guid userId,
-        Guid portfolioId,
-        CancellationToken cancellationToken = default)
+    public async Task<bool> Handle(
+        RenamePortfolioCommand command,
+        CancellationToken cancellationToken)
     {
         var portfolio = await _portfolioRepository.GetByIdAsync(
-            portfolioId,
+            command.PortfolioId,
             cancellationToken);
 
         if (portfolio is null)
@@ -27,13 +28,13 @@ public sealed class ClosePortfolioService
             return false;
         }
 
-        if (portfolio.UserId != userId)
+        if (portfolio.UserId != command.UserId)
         {
             throw new ForbiddenException(
                 "The portfolio does not belong to the authenticated user.");
         }
 
-        portfolio.Close();
+        portfolio.Rename(command.Name);
 
         await _portfolioRepository.SaveChangesAsync(
             cancellationToken);

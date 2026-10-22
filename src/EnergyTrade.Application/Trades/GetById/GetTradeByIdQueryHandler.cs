@@ -1,25 +1,26 @@
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Common.Exceptions;
+using MediatR;
 
 namespace EnergyTrade.Application.Trades.GetById;
 
-public sealed class GetTradeByIdService
+public sealed class GetTradeByIdQueryHandler
+    : IRequestHandler<GetTradeByIdQuery, GetTradeByIdResult?>
 {
     private readonly ITradeRepository _tradeRepository;
 
-    public GetTradeByIdService(
+    public GetTradeByIdQueryHandler(
         ITradeRepository tradeRepository)
     {
         _tradeRepository = tradeRepository;
     }
 
-    public async Task<GetTradeByIdResult?> ExecuteAsync(
-        Guid userId,
-        Guid id,
-        CancellationToken cancellationToken = default)
+    public async Task<GetTradeByIdResult?> Handle(
+        GetTradeByIdQuery query,
+        CancellationToken cancellationToken)
     {
         var trade = await _tradeRepository.GetByIdAsync(
-            id,
+            query.TradeId,
             cancellationToken);
 
         if (trade is null)
@@ -27,8 +28,8 @@ public sealed class GetTradeByIdService
             return null;
         }
 
-        if (trade.SellerId != userId &&
-            trade.BuyerId != userId)
+        if (trade.SellerId != query.UserId &&
+            trade.BuyerId != query.UserId)
         {
             throw new ForbiddenException(
                 "The trade does not belong to the authenticated user.");

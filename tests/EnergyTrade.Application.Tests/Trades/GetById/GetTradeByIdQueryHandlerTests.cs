@@ -6,24 +6,20 @@ using EnergyTrade.Domain.Enums;
 
 namespace EnergyTrade.Application.Tests.Trades.GetById;
 
-public class GetTradeByIdServiceTests
+public class GetTradeByIdQueryHandlerTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenUserIsSeller_ReturnsTrade()
+    public async Task Handle_WhenUserIsSeller_ReturnsTrade()
     {
-        // Arrange
         var trade = CreateTrade();
         var repository = new FakeTradeRepository(trade);
-        var service = new GetTradeByIdService(repository);
+        var handler = new GetTradeByIdQueryHandler(repository);
 
-        // Act
-        var result = await service.ExecuteAsync(
-            trade.SellerId,
-            trade.Id);
+        var result = await handler.Handle(
+            new GetTradeByIdQuery(trade.SellerId, trade.Id),
+            CancellationToken.None);
 
-        // Assert
         Assert.NotNull(result);
-
         Assert.Equal(trade.Id, result.Id);
         Assert.Equal(trade.EnergyOfferId, result.EnergyOfferId);
         Assert.Equal(trade.SellerId, result.SellerId);
@@ -36,58 +32,48 @@ public class GetTradeByIdServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenUserIsBuyer_ReturnsTrade()
+    public async Task Handle_WhenUserIsBuyer_ReturnsTrade()
     {
-        // Arrange
         var trade = CreateTrade();
         var repository = new FakeTradeRepository(trade);
-        var service = new GetTradeByIdService(repository);
+        var handler = new GetTradeByIdQueryHandler(repository);
 
-        // Act
-        var result = await service.ExecuteAsync(
-            trade.BuyerId,
-            trade.Id);
+        var result = await handler.Handle(
+            new GetTradeByIdQuery(trade.BuyerId, trade.Id),
+            CancellationToken.None);
 
-        // Assert
         Assert.NotNull(result);
         Assert.Equal(trade.Id, result.Id);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenTradeBelongsToAnotherUser_ThrowsForbiddenException()
+    public async Task Handle_WhenTradeBelongsToAnotherUser_ThrowsForbiddenException()
     {
-        // Arrange
         var trade = CreateTrade();
         var repository = new FakeTradeRepository(trade);
-        var service = new GetTradeByIdService(repository);
-
+        var handler = new GetTradeByIdQueryHandler(repository);
         var anotherUserId = Guid.NewGuid();
 
-        // Act
         var exception = await Assert.ThrowsAsync<ForbiddenException>(
-            () => service.ExecuteAsync(
-                anotherUserId,
-                trade.Id));
+            () => handler.Handle(
+                new GetTradeByIdQuery(anotherUserId, trade.Id),
+                CancellationToken.None));
 
-        // Assert
         Assert.Equal(
             "The trade does not belong to the authenticated user.",
             exception.Message);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenTradeDoesNotExist_ReturnsNull()
+    public async Task Handle_WhenTradeDoesNotExist_ReturnsNull()
     {
-        // Arrange
         var repository = new FakeTradeRepository(null);
-        var service = new GetTradeByIdService(repository);
+        var handler = new GetTradeByIdQueryHandler(repository);
 
-        // Act
-        var result = await service.ExecuteAsync(
-            Guid.NewGuid(),
-            Guid.NewGuid());
+        var result = await handler.Handle(
+            new GetTradeByIdQuery(Guid.NewGuid(), Guid.NewGuid()),
+            CancellationToken.None);
 
-        // Assert
         Assert.Null(result);
     }
 
@@ -103,8 +89,7 @@ public class GetTradeByIdServiceTests
             Currency.EUR);
     }
 
-    private sealed class FakeTradeRepository
-        : ITradeRepository
+    private sealed class FakeTradeRepository : ITradeRepository
     {
         private readonly Trade? _trade;
 
@@ -113,24 +98,11 @@ public class GetTradeByIdServiceTests
             _trade = trade;
         }
 
-        public Task AddAsync(
-            Trade trade,
-            CancellationToken cancellationToken = default)
-        {
-            return Task.CompletedTask;
-        }
+        public Task AddAsync(Trade trade, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
 
-        public Task<Trade?> GetByIdAsync(
-            Guid id,
-            CancellationToken cancellationToken = default)
-        {
-            if (_trade?.Id == id)
-            {
-                return Task.FromResult<Trade?>(_trade);
-            }
-
-            return Task.FromResult<Trade?>(null);
-        }
+        public Task<Trade?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+            => Task.FromResult(_trade?.Id == id ? _trade : null);
 
         public Task<IReadOnlyList<Trade>> GetAllAsync(
             Guid? participantId = null,
@@ -138,17 +110,12 @@ public class GetTradeByIdServiceTests
             int page = 1,
             int pageSize = 10,
             CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult<IReadOnlyList<Trade>>(
-                Array.Empty<Trade>());
-        }
+            => Task.FromResult<IReadOnlyList<Trade>>(Array.Empty<Trade>());
 
         public Task<int> CountAsync(
             Guid? participantId = null,
             EnergyType? energyType = null,
             CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult(0);
-        }
+            => Task.FromResult(0);
     }
 }
