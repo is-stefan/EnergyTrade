@@ -1,5 +1,6 @@
 using EnergyTrade.Application.Abstractions.Authentication;
 using EnergyTrade.Application.Positions.GetByPortfolio;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,14 +11,14 @@ namespace EnergyTrade.Api.Controllers;
 [Authorize]
 public sealed class PositionsController : ControllerBase
 {
-    private readonly GetPositionsByPortfolioService _getPositionsByPortfolioService;
+    private readonly ISender _sender;
     private readonly ICurrentUserService _currentUserService;
 
     public PositionsController(
-        GetPositionsByPortfolioService getPositionsByPortfolioService,
+        ISender sender,
         ICurrentUserService currentUserService)
     {
-        _getPositionsByPortfolioService = getPositionsByPortfolioService;
+        _sender = sender;
         _currentUserService = currentUserService;
     }
 
@@ -28,11 +29,11 @@ public sealed class PositionsController : ControllerBase
     {
         var userId = _currentUserService.UserId;
 
-        var result =
-            await _getPositionsByPortfolioService.ExecuteAsync(
+        var result = await _sender.Send(
+            new GetPositionsByPortfolioQuery(
                 userId,
-                portfolioId,
-                cancellationToken);
+                portfolioId),
+            cancellationToken);
 
         if (result is null)
         {

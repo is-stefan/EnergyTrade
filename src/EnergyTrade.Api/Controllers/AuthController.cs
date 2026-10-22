@@ -1,6 +1,7 @@
-using EnergyTrade.Application.Auth.Register;
-using Microsoft.AspNetCore.Mvc;
 using EnergyTrade.Application.Auth.Login;
+using EnergyTrade.Application.Auth.Register;
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
 
 namespace EnergyTrade.Api.Controllers;
 
@@ -8,16 +9,11 @@ namespace EnergyTrade.Api.Controllers;
 [Route("api/auth")]
 public sealed class AuthController : ControllerBase
 {
-    private readonly RegisterService _registerService;
+    private readonly ISender _sender;
 
-    private readonly LoginService _loginService;
-
-    public AuthController(
-        RegisterService registerService,
-        LoginService loginService)
+    public AuthController(ISender sender)
     {
-        _registerService = registerService;
-        _loginService = loginService;
+        _sender = sender;
     }
 
     [HttpPost("register")]
@@ -25,8 +21,8 @@ public sealed class AuthController : ControllerBase
         RegisterRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _registerService.ExecuteAsync(
-            request,
+        var result = await _sender.Send(
+            RegisterCommand.FromRequest(request),
             cancellationToken);
 
         return Created(
@@ -39,8 +35,8 @@ public sealed class AuthController : ControllerBase
         LoginRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _loginService.ExecuteAsync(
-            request,
+        var result = await _sender.Send(
+            LoginCommand.FromRequest(request),
             cancellationToken);
 
         return Ok(result);

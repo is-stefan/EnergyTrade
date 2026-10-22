@@ -6,10 +6,10 @@ using EnergyTrade.Domain.Entities;
 
 namespace EnergyTrade.Application.Tests.Auth.Login;
 
-public class LoginServiceTests
+public class LoginCommandHandlerTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenCredentialsAreValid_ReturnsToken()
+    public async Task Handle_WhenCredentialsAreValid_ReturnsToken()
     {
         // Arrange
         var user = new User(
@@ -20,17 +20,19 @@ public class LoginServiceTests
         var passwordHasher = new FakePasswordHasher(true);
         var jwtTokenGenerator = new FakeJwtTokenGenerator();
 
-        var service = new LoginService(
+        var handler = new LoginCommandHandler(
             userRepository,
             passwordHasher,
             jwtTokenGenerator);
 
-        var request = new LoginRequest(
+        var command = new LoginCommand(
             "user@test.com",
             "correct-password");
 
         // Act
-        var result = await service.ExecuteAsync(request);
+        var result = await handler.Handle(
+            command,
+            CancellationToken.None);
 
         // Assert
         Assert.Equal(user.Id, result.UserId);
@@ -39,25 +41,27 @@ public class LoginServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenUserDoesNotExist_ThrowsUnauthorizedException()
+    public async Task Handle_WhenUserDoesNotExist_ThrowsUnauthorizedException()
     {
         // Arrange
         var userRepository = new FakeUserRepository(null);
         var passwordHasher = new FakePasswordHasher(true);
         var jwtTokenGenerator = new FakeJwtTokenGenerator();
 
-        var service = new LoginService(
+        var handler = new LoginCommandHandler(
             userRepository,
             passwordHasher,
             jwtTokenGenerator);
 
-        var request = new LoginRequest(
+        var command = new LoginCommand(
             "missing@test.com",
             "password");
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<UnauthorizedException>(
-            () => service.ExecuteAsync(request));
+            () => handler.Handle(
+                command,
+                CancellationToken.None));
 
         Assert.Equal(
             "Invalid email or password.",
@@ -65,7 +69,7 @@ public class LoginServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPasswordIsInvalid_ThrowsUnauthorizedException()
+    public async Task Handle_WhenPasswordIsInvalid_ThrowsUnauthorizedException()
     {
         // Arrange
         var user = new User(
@@ -76,18 +80,20 @@ public class LoginServiceTests
         var passwordHasher = new FakePasswordHasher(false);
         var jwtTokenGenerator = new FakeJwtTokenGenerator();
 
-        var service = new LoginService(
+        var handler = new LoginCommandHandler(
             userRepository,
             passwordHasher,
             jwtTokenGenerator);
 
-        var request = new LoginRequest(
+        var command = new LoginCommand(
             "user@test.com",
             "wrong-password");
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<UnauthorizedException>(
-            () => service.ExecuteAsync(request));
+            () => handler.Handle(
+                command,
+                CancellationToken.None));
 
         Assert.Equal(
             "Invalid email or password.",
@@ -95,35 +101,39 @@ public class LoginServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenEmailIsEmpty_ThrowsArgumentException()
+    public async Task Handle_WhenEmailIsEmpty_ThrowsArgumentException()
     {
-        var service = new LoginService(
+        var handler = new LoginCommandHandler(
             new FakeUserRepository(null),
             new FakePasswordHasher(true),
             new FakeJwtTokenGenerator());
 
-        var request = new LoginRequest(
+        var command = new LoginCommand(
             "",
             "password");
 
         await Assert.ThrowsAsync<ArgumentException>(
-            () => service.ExecuteAsync(request));
+            () => handler.Handle(
+                command,
+                CancellationToken.None));
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPasswordIsEmpty_ThrowsArgumentException()
+    public async Task Handle_WhenPasswordIsEmpty_ThrowsArgumentException()
     {
-        var service = new LoginService(
+        var handler = new LoginCommandHandler(
             new FakeUserRepository(null),
             new FakePasswordHasher(true),
             new FakeJwtTokenGenerator());
 
-        var request = new LoginRequest(
+        var command = new LoginCommand(
             "user@test.com",
             "");
 
         await Assert.ThrowsAsync<ArgumentException>(
-            () => service.ExecuteAsync(request));
+            () => handler.Handle(
+                command,
+                CancellationToken.None));
     }
 
     private sealed class FakeUserRepository

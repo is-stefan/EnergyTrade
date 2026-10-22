@@ -1,30 +1,32 @@
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Abstractions.Security;
 using EnergyTrade.Application.Auth.Register;
-using EnergyTrade.Domain.Entities;
 using EnergyTrade.Application.Common.Exceptions;
+using EnergyTrade.Domain.Entities;
 
 namespace EnergyTrade.Application.Tests.Auth.Register;
 
-public class RegisterServiceTests
+public class RegisterCommandHandlerTests
 {
     [Fact]
-    public async Task ExecuteAsync_WithValidRequest_CreatesUser()
+    public async Task Handle_WithValidRequest_CreatesUser()
     {
         // Arrange
         var userRepository = new FakeUserRepository();
         var passwordHasher = new FakePasswordHasher();
 
-        var service = new RegisterService(
+        var handler = new RegisterCommandHandler(
             userRepository,
             passwordHasher);
 
-        var request = new RegisterRequest(
+        var command = new RegisterCommand(
             "Test@EnergyTrade.com",
             "Password123!");
 
         // Act
-        var result = await service.ExecuteAsync(request);
+        var result = await handler.Handle(
+            command,
+            CancellationToken.None);
 
         // Assert
         Assert.NotEqual(Guid.Empty, result.Id);
@@ -48,7 +50,7 @@ public class RegisterServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenEmailAlreadyExists_ThrowsConflictException()
+    public async Task Handle_WhenEmailAlreadyExists_ThrowsConflictException()
     {
         // Arrange
         var userRepository = new FakeUserRepository
@@ -58,17 +60,19 @@ public class RegisterServiceTests
 
         var passwordHasher = new FakePasswordHasher();
 
-        var service = new RegisterService(
+        var handler = new RegisterCommandHandler(
             userRepository,
             passwordHasher);
 
-        var request = new RegisterRequest(
+        var command = new RegisterCommand(
             "test@energytrade.com",
             "Password123!");
 
         // Act & Assert
         await Assert.ThrowsAsync<ConflictException>(
-            () => service.ExecuteAsync(request));
+            () => handler.Handle(
+                command,
+                CancellationToken.None));
 
         Assert.Null(userRepository.AddedUser);
         Assert.Equal(0, userRepository.AddCallCount);
@@ -77,46 +81,50 @@ public class RegisterServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithEmptyEmail_ThrowsArgumentException()
+    public async Task Handle_WithEmptyEmail_ThrowsArgumentException()
     {
         // Arrange
         var userRepository = new FakeUserRepository();
         var passwordHasher = new FakePasswordHasher();
 
-        var service = new RegisterService(
+        var handler = new RegisterCommandHandler(
             userRepository,
             passwordHasher);
 
-        var request = new RegisterRequest(
+        var command = new RegisterCommand(
             "",
             "Password123!");
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(
-            () => service.ExecuteAsync(request));
+            () => handler.Handle(
+                command,
+                CancellationToken.None));
 
         Assert.Equal(0, userRepository.AddCallCount);
         Assert.Equal(0, passwordHasher.HashCallCount);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithEmptyPassword_ThrowsArgumentException()
+    public async Task Handle_WithEmptyPassword_ThrowsArgumentException()
     {
         // Arrange
         var userRepository = new FakeUserRepository();
         var passwordHasher = new FakePasswordHasher();
 
-        var service = new RegisterService(
+        var handler = new RegisterCommandHandler(
             userRepository,
             passwordHasher);
 
-        var request = new RegisterRequest(
+        var command = new RegisterCommand(
             "test@energytrade.com",
             "");
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(
-            () => service.ExecuteAsync(request));
+            () => handler.Handle(
+                command,
+                CancellationToken.None));
 
         Assert.Equal(0, userRepository.AddCallCount);
         Assert.Equal(0, passwordHasher.HashCallCount);

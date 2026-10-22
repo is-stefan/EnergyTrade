@@ -1,16 +1,18 @@
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Abstractions.Security;
 using EnergyTrade.Application.Common.Exceptions;
+using MediatR;
 
 namespace EnergyTrade.Application.Auth.Login;
 
-public sealed class LoginService
+public sealed class LoginCommandHandler
+    : IRequestHandler<LoginCommand, LoginResult>
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
 
-    public LoginService(
+    public LoginCommandHandler(
         IUserRepository userRepository,
         IPasswordHasher passwordHasher,
         IJwtTokenGenerator jwtTokenGenerator)
@@ -20,26 +22,26 @@ public sealed class LoginService
         _jwtTokenGenerator = jwtTokenGenerator;
     }
 
-    public async Task<LoginResult> ExecuteAsync(
-        LoginRequest request,
-        CancellationToken cancellationToken = default)
+    public async Task<LoginResult> Handle(
+        LoginCommand command,
+        CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.Email))
+        if (string.IsNullOrWhiteSpace(command.Email))
         {
             throw new ArgumentException(
                 "Email cannot be empty.",
-                nameof(request.Email));
+                nameof(command.Email));
         }
 
-        if (string.IsNullOrWhiteSpace(request.Password))
+        if (string.IsNullOrWhiteSpace(command.Password))
         {
             throw new ArgumentException(
                 "Password cannot be empty.",
-                nameof(request.Password));
+                nameof(command.Password));
         }
 
         var normalizedEmail =
-            request.Email.Trim().ToLowerInvariant();
+            command.Email.Trim().ToLowerInvariant();
 
         var user = await _userRepository.GetByEmailAsync(
             normalizedEmail,
@@ -53,7 +55,7 @@ public sealed class LoginService
 
         var passwordValid =
             _passwordHasher.Verify(
-                request.Password,
+                command.Password,
                 user.PasswordHash);
 
         if (!passwordValid)
