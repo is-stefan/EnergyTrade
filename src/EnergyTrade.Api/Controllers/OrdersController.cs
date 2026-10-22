@@ -19,8 +19,6 @@ public class OrdersController : ControllerBase
 {
     private readonly ISender _sender;
 
-    private readonly GetOrdersService _getOrdersService;
-
     private readonly CancelOrderService _cancelOrderService;
 
     private readonly MatchOrderService _matchOrderService;
@@ -31,14 +29,12 @@ public class OrdersController : ControllerBase
 
     public OrdersController(
         ISender sender,
-        GetOrdersService getOrdersService,
         CancelOrderService cancelOrderService,
         MatchOrderService matchOrderService,
         IdempotentCreateOrderService idempotentCreateOrderService,
         ICurrentUserService currentUserService)
     {
         _sender = sender;
-        _getOrdersService = getOrdersService;
         _cancelOrderService = cancelOrderService;
         _matchOrderService = matchOrderService;
         _idempotentCreateOrderService = idempotentCreateOrderService;
@@ -74,12 +70,13 @@ public class OrdersController : ControllerBase
     {
         var userId = _currentUserService.UserId;
 
-        var result = await _getOrdersService.ExecuteAsync(
-            userId,
-            energyType,
-            status,
-            page,
-            pageSize,
+        var result = await _sender.Send(
+            new GetOrdersQuery(
+                userId,
+                energyType,
+                status,
+                page,
+                pageSize),
             cancellationToken);
 
         return Ok(result);
