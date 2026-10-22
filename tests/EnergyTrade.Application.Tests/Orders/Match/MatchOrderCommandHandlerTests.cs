@@ -9,10 +9,10 @@ using EnergyTrade.Domain.Enums;
 
 namespace EnergyTrade.Application.Tests.Orders.Match;
 
-public class MatchOrderServiceTests
+public class MatchOrderCommandHandlerTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenMatchingOfferExists_CreatesTradeAndUpdatesStates()
+    public async Task Handle_WhenMatchingOfferExists_CreatesTradeAndUpdatesStates()
     {
         // Arrange
         var order = CreateOrder();
@@ -29,7 +29,7 @@ public class MatchOrderServiceTests
         var transactionManager = new FakeTransactionManager();
         var businessMetrics = new FakeBusinessMetrics();
 
-        var service = new MatchOrderService(
+        var handler = new MatchOrderCommandHandler(
             orderRepository,
             energyOfferRepository,
             tradeRepository,
@@ -37,10 +37,14 @@ public class MatchOrderServiceTests
             transactionManager,
             businessMetrics);
 
-        // Act
-        var result = await service.ExecuteAsync(
+        var command = new MatchOrderCommand(
             order.BuyerId,
             order.Id);
+
+        // Act
+        var result = await handler.Handle(
+            command,
+            CancellationToken.None);
 
         // Assert
         Assert.NotNull(result);
@@ -69,7 +73,7 @@ public class MatchOrderServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenOrderDoesNotExist_ReturnsNull()
+    public async Task Handle_WhenOrderDoesNotExist_ReturnsNull()
     {
         // Arrange
         var orderRepository = new FakeOrderRepository(null);
@@ -83,7 +87,7 @@ public class MatchOrderServiceTests
         var transactionManager = new FakeTransactionManager();
         var businessMetrics = new FakeBusinessMetrics();
 
-        var service = new MatchOrderService(
+        var handler = new MatchOrderCommandHandler(
             orderRepository,
             energyOfferRepository,
             tradeRepository,
@@ -91,10 +95,14 @@ public class MatchOrderServiceTests
             transactionManager,
             businessMetrics);
 
-        // Act
-        var result = await service.ExecuteAsync(
+        var command = new MatchOrderCommand(
             Guid.NewGuid(),
             Guid.NewGuid());
+
+        // Act
+        var result = await handler.Handle(
+            command,
+            CancellationToken.None);
 
         // Assert
         Assert.Null(result);
@@ -104,7 +112,7 @@ public class MatchOrderServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenOrderBelongsToAnotherUser_ThrowsForbiddenException()
+    public async Task Handle_WhenOrderBelongsToAnotherUser_ThrowsForbiddenException()
     {
         // Arrange
         var order = CreateOrder();
@@ -120,7 +128,7 @@ public class MatchOrderServiceTests
         var transactionManager = new FakeTransactionManager();
         var businessMetrics = new FakeBusinessMetrics();
 
-        var service = new MatchOrderService(
+        var handler = new MatchOrderCommandHandler(
             orderRepository,
             energyOfferRepository,
             tradeRepository,
@@ -130,11 +138,15 @@ public class MatchOrderServiceTests
 
         var anotherUserId = Guid.NewGuid();
 
+        var command = new MatchOrderCommand(
+            anotherUserId,
+            order.Id);
+
         // Act
         var exception = await Assert.ThrowsAsync<ForbiddenException>(
-            () => service.ExecuteAsync(
-                anotherUserId,
-                order.Id));
+            () => handler.Handle(
+                command,
+                CancellationToken.None));
 
         // Assert
         Assert.Equal(
@@ -147,7 +159,7 @@ public class MatchOrderServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenNoMatchingOfferExists_ReturnsNotMatched()
+    public async Task Handle_WhenNoMatchingOfferExists_ReturnsNotMatched()
     {
         // Arrange
         var order = CreateOrder();
@@ -163,7 +175,7 @@ public class MatchOrderServiceTests
         var transactionManager = new FakeTransactionManager();
         var businessMetrics = new FakeBusinessMetrics();
 
-        var service = new MatchOrderService(
+        var handler = new MatchOrderCommandHandler(
             orderRepository,
             energyOfferRepository,
             tradeRepository,
@@ -171,10 +183,14 @@ public class MatchOrderServiceTests
             transactionManager,
             businessMetrics);
 
-        // Act
-        var result = await service.ExecuteAsync(
+        var command = new MatchOrderCommand(
             order.BuyerId,
             order.Id);
+
+        // Act
+        var result = await handler.Handle(
+            command,
+            CancellationToken.None);
 
         // Assert
         Assert.NotNull(result);
@@ -189,7 +205,7 @@ public class MatchOrderServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenOrderIsNotOpen_ThrowsBusinessRuleException()
+    public async Task Handle_WhenOrderIsNotOpen_ThrowsBusinessRuleException()
     {
         // Arrange
         var order = CreateOrder();
@@ -208,7 +224,7 @@ public class MatchOrderServiceTests
         var transactionManager = new FakeTransactionManager();
         var businessMetrics = new FakeBusinessMetrics();
 
-        var service = new MatchOrderService(
+        var handler = new MatchOrderCommandHandler(
             orderRepository,
             energyOfferRepository,
             tradeRepository,
@@ -216,11 +232,15 @@ public class MatchOrderServiceTests
             transactionManager,
             businessMetrics);
 
+        var command = new MatchOrderCommand(
+            order.BuyerId,
+            order.Id);
+
         // Act & Assert
         await Assert.ThrowsAsync<BusinessRuleException>(
-            () => service.ExecuteAsync(
-                order.BuyerId,
-                order.Id));
+            () => handler.Handle(
+                command,
+                CancellationToken.None));
 
         Assert.Equal(0, tradeRepository.AddCallCount);
         Assert.Empty(positionRepository.Positions);
@@ -229,7 +249,7 @@ public class MatchOrderServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenConcurrencyConflictOccurs_ReturnsNotMatched()
+    public async Task Handle_WhenConcurrencyConflictOccurs_ReturnsNotMatched()
     {
         // Arrange
         var orderRepository = new FakeOrderRepository(null);
@@ -245,7 +265,7 @@ public class MatchOrderServiceTests
 
         var businessMetrics = new FakeBusinessMetrics();
 
-        var service = new MatchOrderService(
+        var handler = new MatchOrderCommandHandler(
             orderRepository,
             energyOfferRepository,
             tradeRepository,
@@ -253,10 +273,14 @@ public class MatchOrderServiceTests
             transactionManager,
             businessMetrics);
 
-        // Act
-        var result = await service.ExecuteAsync(
+        var command = new MatchOrderCommand(
             Guid.NewGuid(),
             Guid.NewGuid());
+
+        // Act
+        var result = await handler.Handle(
+            command,
+            CancellationToken.None);
 
         // Assert
         Assert.NotNull(result);

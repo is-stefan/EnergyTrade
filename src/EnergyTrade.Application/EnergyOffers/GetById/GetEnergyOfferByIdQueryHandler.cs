@@ -1,25 +1,26 @@
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Common.Exceptions;
+using MediatR;
 
 namespace EnergyTrade.Application.EnergyOffers.GetById;
 
-public sealed class GetEnergyOfferByIdService
+public sealed class GetEnergyOfferByIdQueryHandler
+    : IRequestHandler<GetEnergyOfferByIdQuery, GetEnergyOfferByIdResult?>
 {
     private readonly IEnergyOfferRepository _energyOfferRepository;
 
-    public GetEnergyOfferByIdService(
+    public GetEnergyOfferByIdQueryHandler(
         IEnergyOfferRepository energyOfferRepository)
     {
         _energyOfferRepository = energyOfferRepository;
     }
 
-    public async Task<GetEnergyOfferByIdResult?> ExecuteAsync(
-        Guid userId,
-        Guid id,
-        CancellationToken cancellationToken = default)
+    public async Task<GetEnergyOfferByIdResult?> Handle(
+        GetEnergyOfferByIdQuery query,
+        CancellationToken cancellationToken)
     {
         var offer = await _energyOfferRepository.GetByIdAsync(
-            id,
+            query.OfferId,
             cancellationToken);
 
         if (offer is null)
@@ -27,7 +28,7 @@ public sealed class GetEnergyOfferByIdService
             return null;
         }
 
-        if (offer.SellerId != userId)
+        if (offer.SellerId != query.UserId)
         {
             throw new ForbiddenException(
                 "The energy offer does not belong to the authenticated user.");

@@ -19,20 +19,16 @@ public class OrdersController : ControllerBase
 {
     private readonly ISender _sender;
 
-    private readonly MatchOrderService _matchOrderService;
-
     private readonly IdempotentCreateOrderService _idempotentCreateOrderService;
 
     private readonly ICurrentUserService _currentUserService;
 
     public OrdersController(
         ISender sender,
-        MatchOrderService matchOrderService,
         IdempotentCreateOrderService idempotentCreateOrderService,
         ICurrentUserService currentUserService)
     {
         _sender = sender;
-        _matchOrderService = matchOrderService;
         _idempotentCreateOrderService = idempotentCreateOrderService;
         _currentUserService = currentUserService;
     }
@@ -106,9 +102,10 @@ public class OrdersController : ControllerBase
     {
         var userId = _currentUserService.UserId;
 
-        var result = await _matchOrderService.ExecuteAsync(
-            userId,
-            id,
+        var result = await _sender.Send(
+            new MatchOrderCommand(
+                userId,
+                id),
             cancellationToken);
 
         if (result is null)

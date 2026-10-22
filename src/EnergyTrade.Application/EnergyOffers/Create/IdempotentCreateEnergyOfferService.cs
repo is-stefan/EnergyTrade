@@ -1,6 +1,7 @@
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.Idempotency;
+using MediatR;
 
 namespace EnergyTrade.Application.EnergyOffers.Create;
 
@@ -8,18 +9,18 @@ public sealed class IdempotentCreateEnergyOfferService
 {
     private const string Operation = "CreateEnergyOffer";
 
-    private readonly CreateEnergyOfferService _createEnergyOfferService;
+    private readonly ISender _sender;
     private readonly IdempotencyService _idempotencyService;
     private readonly IIdempotencyRepository _idempotencyRepository;
     private readonly ITransactionManager _transactionManager;
 
     public IdempotentCreateEnergyOfferService(
-        CreateEnergyOfferService createEnergyOfferService,
+        ISender sender,
         IdempotencyService idempotencyService,
         IIdempotencyRepository idempotencyRepository,
         ITransactionManager transactionManager)
     {
-        _createEnergyOfferService = createEnergyOfferService;
+        _sender = sender;
         _idempotencyService = idempotencyService;
         _idempotencyRepository = idempotencyRepository;
         _transactionManager = transactionManager;
@@ -53,11 +54,11 @@ public sealed class IdempotentCreateEnergyOfferService
             await _transactionManager.ExecuteAsync(
                 async transactionCancellationToken =>
                 {
-                    result =
-                        await _createEnergyOfferService.ExecuteAsync(
+                    result = await _sender.Send(
+                        CreateEnergyOfferCommand.FromRequest(
                             userId,
-                            request,
-                            transactionCancellationToken);
+                            request),
+                        transactionCancellationToken);
 
                     await _idempotencyService.SaveResultAsync(
                         scopedKey,

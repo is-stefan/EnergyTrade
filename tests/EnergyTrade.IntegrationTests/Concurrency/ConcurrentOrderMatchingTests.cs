@@ -5,6 +5,7 @@ using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
 using EnergyTrade.Infrastructure;
 using EnergyTrade.Infrastructure.Persistence;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -140,22 +141,24 @@ public class ConcurrentOrderMatchingTests
             await using var scope2 =
                 serviceProvider.CreateAsyncScope();
 
-            var matchService1 =
+            var sender1 =
                 scope1.ServiceProvider
-                    .GetRequiredService<MatchOrderService>();
+                    .GetRequiredService<ISender>();
 
-            var matchService2 =
+            var sender2 =
                 scope2.ServiceProvider
-                    .GetRequiredService<MatchOrderService>();
+                    .GetRequiredService<ISender>();
 
             // Act
             var results = await Task.WhenAll(
-                matchService1.ExecuteAsync(
-                    order1.BuyerId,
-                    order1.Id),
-                matchService2.ExecuteAsync(
-                    order2.BuyerId,
-                    order2.Id));
+                sender1.Send(
+                    new MatchOrderCommand(
+                        order1.BuyerId,
+                        order1.Id)),
+                sender2.Send(
+                    new MatchOrderCommand(
+                        order2.BuyerId,
+                        order2.Id)));
 
             // Assert - business result
             Assert.Equal(

@@ -78,7 +78,7 @@ public class ConcurrentCreateEnergyOfferIdempotencyTests
         var scopedKey =
             $"{sellerId}:{idempotencyKey}";
 
-        // Save portfolio required by CreateEnergyOfferService
+        // Save portfolio required for energy offer creation.
         await using (var setupScope =
                      serviceProvider.CreateAsyncScope())
         {

@@ -7,10 +7,10 @@ using EnergyTrade.Domain.Enums;
 
 namespace EnergyTrade.Application.Tests.EnergyOffers.Create;
 
-public class CreateEnergyOfferServiceTests
+public class CreateEnergyOfferCommandHandlerTests
 {
     [Fact]
-    public async Task ExecuteAsync_WithValidRequest_CreatesAndSavesEnergyOffer()
+    public async Task Handle_WithValidRequest_CreatesAndSavesEnergyOffer()
     {
         // Arrange
         var repository = new FakeEnergyOfferRepository();
@@ -43,15 +43,19 @@ public class CreateEnergyOfferServiceTests
 
         var businessMetrics = new FakeBusinessMetrics();
 
-        var service = new CreateEnergyOfferService(
+        var handler = new CreateEnergyOfferCommandHandler(
             repository,
             portfolioRepository,
             businessMetrics);
 
-        // Act
-        var result = await service.ExecuteAsync(
+        var command = CreateEnergyOfferCommand.FromRequest(
             sellerId,
             request);
+
+        // Act
+        var result = await handler.Handle(
+            command,
+            CancellationToken.None);
 
         // Assert
         Assert.Equal(1, repository.AddCallCount);
@@ -77,7 +81,7 @@ public class CreateEnergyOfferServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithZeroQuantity_ThrowsArgumentOutOfRangeException()
+    public async Task Handle_WithZeroQuantity_ThrowsArgumentOutOfRangeException()
     {
         // Arrange
         var repository = new FakeEnergyOfferRepository();
@@ -107,17 +111,21 @@ public class CreateEnergyOfferServiceTests
 
         var businessMetrics = new FakeBusinessMetrics();
 
-        var service = new CreateEnergyOfferService(
+        var handler = new CreateEnergyOfferCommandHandler(
             repository,
             portfolioRepository,
             businessMetrics);
 
+        var command = CreateEnergyOfferCommand.FromRequest(
+            sellerId,
+            request);
+
         // Act
         var exception =
             await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-                () => service.ExecuteAsync(
-                    sellerId,
-                    request));
+                () => handler.Handle(
+                    command,
+                    CancellationToken.None));
 
         // Assert
         Assert.Equal("quantityMWh", exception.ParamName);
@@ -128,7 +136,7 @@ public class CreateEnergyOfferServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPortfolioDoesNotExist_ThrowsNotFoundException()
+    public async Task Handle_WhenPortfolioDoesNotExist_ThrowsNotFoundException()
     {
         // Arrange
         var repository = new FakeEnergyOfferRepository();
@@ -141,7 +149,7 @@ public class CreateEnergyOfferServiceTests
 
         var businessMetrics = new FakeBusinessMetrics();
 
-        var service = new CreateEnergyOfferService(
+        var handler = new CreateEnergyOfferCommandHandler(
             repository,
             portfolioRepository,
             businessMetrics);
@@ -158,11 +166,15 @@ public class CreateEnergyOfferServiceTests
             deliveryStart,
             deliveryEnd);
 
+        var command = CreateEnergyOfferCommand.FromRequest(
+            sellerId,
+            request);
+
         // Act & Assert
         await Assert.ThrowsAsync<NotFoundException>(
-            () => service.ExecuteAsync(
-                sellerId,
-                request));
+            () => handler.Handle(
+                command,
+                CancellationToken.None));
 
         Assert.Equal(0, repository.AddCallCount);
         Assert.Null(repository.AddedOffer);
@@ -170,7 +182,7 @@ public class CreateEnergyOfferServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPortfolioIsClosed_ThrowsConflictException()
+    public async Task Handle_WhenPortfolioIsClosed_ThrowsConflictException()
     {
         // Arrange
         var repository = new FakeEnergyOfferRepository();
@@ -202,16 +214,20 @@ public class CreateEnergyOfferServiceTests
 
         var businessMetrics = new FakeBusinessMetrics();
 
-        var service = new CreateEnergyOfferService(
+        var handler = new CreateEnergyOfferCommandHandler(
             repository,
             portfolioRepository,
             businessMetrics);
 
+        var command = CreateEnergyOfferCommand.FromRequest(
+            sellerId,
+            request);
+
         // Act & Assert
         await Assert.ThrowsAsync<ConflictException>(
-            () => service.ExecuteAsync(
-                sellerId,
-                request));
+            () => handler.Handle(
+                command,
+                CancellationToken.None));
 
         Assert.Equal(0, repository.AddCallCount);
         Assert.Null(repository.AddedOffer);
@@ -219,7 +235,7 @@ public class CreateEnergyOfferServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPortfolioBelongsToAnotherUser_ThrowsForbiddenException()
+    public async Task Handle_WhenPortfolioBelongsToAnotherUser_ThrowsForbiddenException()
     {
         // Arrange
         var repository = new FakeEnergyOfferRepository();
@@ -250,16 +266,20 @@ public class CreateEnergyOfferServiceTests
 
         var businessMetrics = new FakeBusinessMetrics();
 
-        var service = new CreateEnergyOfferService(
+        var handler = new CreateEnergyOfferCommandHandler(
             repository,
             portfolioRepository,
             businessMetrics);
 
+        var command = CreateEnergyOfferCommand.FromRequest(
+            authenticatedUserId,
+            request);
+
         // Act & Assert
         await Assert.ThrowsAsync<ForbiddenException>(
-            () => service.ExecuteAsync(
-                authenticatedUserId,
-                request));
+            () => handler.Handle(
+                command,
+                CancellationToken.None));
 
         Assert.Equal(0, repository.AddCallCount);
         Assert.Null(repository.AddedOffer);
