@@ -1,25 +1,26 @@
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Common.Exceptions;
+using MediatR;
 
 namespace EnergyTrade.Application.Orders.Cancel;
 
-public sealed class CancelOrderService
+public sealed class CancelOrderCommandHandler
+    : IRequestHandler<CancelOrderCommand, bool>
 {
     private readonly IOrderRepository _orderRepository;
 
-    public CancelOrderService(
+    public CancelOrderCommandHandler(
         IOrderRepository orderRepository)
     {
         _orderRepository = orderRepository;
     }
 
-    public async Task<bool> ExecuteAsync(
-        Guid userId,
-        Guid id,
-        CancellationToken cancellationToken = default)
+    public async Task<bool> Handle(
+        CancelOrderCommand command,
+        CancellationToken cancellationToken)
     {
         var order = await _orderRepository.GetByIdAsync(
-            id,
+            command.OrderId,
             cancellationToken);
 
         if (order is null)
@@ -27,7 +28,7 @@ public sealed class CancelOrderService
             return false;
         }
 
-        if (order.BuyerId != userId)
+        if (order.BuyerId != command.UserId)
         {
             throw new ForbiddenException(
                 "The order does not belong to the authenticated user.");

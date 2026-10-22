@@ -19,8 +19,6 @@ public class OrdersController : ControllerBase
 {
     private readonly ISender _sender;
 
-    private readonly CancelOrderService _cancelOrderService;
-
     private readonly MatchOrderService _matchOrderService;
 
     private readonly IdempotentCreateOrderService _idempotentCreateOrderService;
@@ -29,13 +27,11 @@ public class OrdersController : ControllerBase
 
     public OrdersController(
         ISender sender,
-        CancelOrderService cancelOrderService,
         MatchOrderService matchOrderService,
         IdempotentCreateOrderService idempotentCreateOrderService,
         ICurrentUserService currentUserService)
     {
         _sender = sender;
-        _cancelOrderService = cancelOrderService;
         _matchOrderService = matchOrderService;
         _idempotentCreateOrderService = idempotentCreateOrderService;
         _currentUserService = currentUserService;
@@ -83,24 +79,25 @@ public class OrdersController : ControllerBase
     }
 
     [HttpPatch("{id:guid}/cancel")]
-public async Task<IActionResult> Cancel(
-    Guid id,
-    CancellationToken cancellationToken)
-{
-    var userId = _currentUserService.UserId;
-
-    var success = await _cancelOrderService.ExecuteAsync(
-        userId,
-        id,
-        cancellationToken);
-
-    if (!success)
+    public async Task<IActionResult> Cancel(
+        Guid id,
+        CancellationToken cancellationToken)
     {
-        return NotFound();
-    }
+        var userId = _currentUserService.UserId;
 
-    return NoContent();
-}
+        var success = await _sender.Send(
+            new CancelOrderCommand(
+                userId,
+                id),
+            cancellationToken);
+
+        if (!success)
+        {
+            return NotFound();
+        }
+
+        return NoContent();
+    }
 
     [HttpPost("{id:guid}/match")]
     public async Task<ActionResult<MatchOrderResult>> Match(
