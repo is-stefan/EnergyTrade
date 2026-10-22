@@ -19,8 +19,6 @@ public class OrdersController : ControllerBase
 {
     private readonly ISender _sender;
 
-    private readonly GetOrderByIdService _getOrderByIdService;
-
     private readonly GetOrdersService _getOrdersService;
 
     private readonly CancelOrderService _cancelOrderService;
@@ -33,7 +31,6 @@ public class OrdersController : ControllerBase
 
     public OrdersController(
         ISender sender,
-        GetOrderByIdService getOrderByIdService,
         GetOrdersService getOrdersService,
         CancelOrderService cancelOrderService,
         MatchOrderService matchOrderService,
@@ -41,7 +38,6 @@ public class OrdersController : ControllerBase
         ICurrentUserService currentUserService)
     {
         _sender = sender;
-        _getOrderByIdService = getOrderByIdService;
         _getOrdersService = getOrdersService;
         _cancelOrderService = cancelOrderService;
         _matchOrderService = matchOrderService;
@@ -56,9 +52,8 @@ public class OrdersController : ControllerBase
     {
         var userId = _currentUserService.UserId;
 
-        var result = await _getOrderByIdService.ExecuteAsync(
-            userId,
-            id,
+        var result = await _sender.Send(
+            new GetOrderByIdQuery(userId, id),
             cancellationToken);
 
         if (result is null)

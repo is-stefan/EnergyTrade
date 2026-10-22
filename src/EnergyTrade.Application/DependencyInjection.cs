@@ -44,7 +44,6 @@ public static class DependencyInjection
         services.AddScoped<GetTradeByIdService>();
         services.AddScoped<GetTradesService>();
 
-        services.AddScoped<GetOrderByIdService>();
         services.AddScoped<GetOrdersService>();
         services.AddScoped<CancelOrderService>();
         services.AddScoped<MatchOrderService>();
