@@ -1,23 +1,25 @@
 using EnergyTrade.Application.Abstractions.Persistence;
+using MediatR;
 
 namespace EnergyTrade.Application.Portfolios.GetByUser;
 
-public sealed class GetPortfoliosByUserService
+public sealed class GetPortfoliosByUserQueryHandler
+    : IRequestHandler<GetPortfoliosByUserQuery, IReadOnlyList<GetPortfoliosByUserResult>>
 {
     private readonly IPortfolioRepository _portfolioRepository;
 
-    public GetPortfoliosByUserService(
+    public GetPortfoliosByUserQueryHandler(
         IPortfolioRepository portfolioRepository)
     {
         _portfolioRepository = portfolioRepository;
     }
 
-    public async Task<IReadOnlyList<GetPortfoliosByUserResult>> ExecuteAsync(
-        Guid userId,
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<GetPortfoliosByUserResult>> Handle(
+        GetPortfoliosByUserQuery query,
+        CancellationToken cancellationToken)
     {
         var portfolios = await _portfolioRepository.GetByUserIdAsync(
-            userId,
+            query.UserId,
             cancellationToken);
 
         return portfolios

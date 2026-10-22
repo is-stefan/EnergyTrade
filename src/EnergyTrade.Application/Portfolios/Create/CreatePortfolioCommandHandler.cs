@@ -1,27 +1,28 @@
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Domain.Entities;
+using MediatR;
 
 namespace EnergyTrade.Application.Portfolios.Create;
 
-public sealed class CreatePortfolioService
+public sealed class CreatePortfolioCommandHandler
+    : IRequestHandler<CreatePortfolioCommand, CreatePortfolioResult>
 {
     private readonly IPortfolioRepository _portfolioRepository;
 
-    public CreatePortfolioService(
+    public CreatePortfolioCommandHandler(
         IPortfolioRepository portfolioRepository)
     {
         _portfolioRepository = portfolioRepository;
     }
 
-    public async Task<CreatePortfolioResult> ExecuteAsync(
-        Guid userId,
-        CreatePortfolioRequest request,
-        CancellationToken cancellationToken = default)
+    public async Task<CreatePortfolioResult> Handle(
+        CreatePortfolioCommand command,
+        CancellationToken cancellationToken)
     {
         var portfolio = new Portfolio(
-            userId,
-            request.Name,
-            request.BaseCurrency);
+            command.UserId,
+            command.Name,
+            command.BaseCurrency);
 
         await _portfolioRepository.AddAsync(
             portfolio,

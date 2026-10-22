@@ -2,6 +2,7 @@ using EnergyTrade.Application.Abstractions.Authentication;
 using EnergyTrade.Application.Trades.GetAll;
 using EnergyTrade.Application.Trades.GetById;
 using EnergyTrade.Domain.Enums;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,17 +13,14 @@ namespace EnergyTrade.Api.Controllers;
 [Authorize]
 public class TradesController : ControllerBase
 {
-    private readonly GetTradeByIdService _getTradeByIdService;
-    private readonly GetTradesService _getTradesService;
+    private readonly ISender _sender;
     private readonly ICurrentUserService _currentUserService;
 
     public TradesController(
-        GetTradeByIdService getTradeByIdService,
-        GetTradesService getTradesService,
+        ISender sender,
         ICurrentUserService currentUserService)
     {
-        _getTradeByIdService = getTradeByIdService;
-        _getTradesService = getTradesService;
+        _sender = sender;
         _currentUserService = currentUserService;
     }
 
@@ -33,9 +31,8 @@ public class TradesController : ControllerBase
     {
         var userId = _currentUserService.UserId;
 
-        var result = await _getTradeByIdService.ExecuteAsync(
-            userId,
-            id,
+        var result = await _sender.Send(
+            new GetTradeByIdQuery(userId, id),
             cancellationToken);
 
         if (result is null)
@@ -55,11 +52,12 @@ public class TradesController : ControllerBase
     {
         var userId = _currentUserService.UserId;
 
-        var result = await _getTradesService.ExecuteAsync(
-            userId,
-            energyType,
-            page,
-            pageSize,
+        var result = await _sender.Send(
+            new GetTradesQuery(
+                userId,
+                energyType,
+                page,
+                pageSize),
             cancellationToken);
 
         return Ok(result);

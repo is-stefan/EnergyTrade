@@ -1,28 +1,12 @@
+using EnergyTrade.Application.Auth.Login;
+using EnergyTrade.Application.Auth.Register;
 using EnergyTrade.Application.EnergyOffers.Create;
-using Microsoft.Extensions.DependencyInjection;
-using EnergyTrade.Application.EnergyOffers.GetById;
-using EnergyTrade.Application.EnergyOffers.GetAll;
-using EnergyTrade.Application.EnergyOffers.Cancel;
-using EnergyTrade.Application.EnergyOffers.Close;
-using EnergyTrade.Application.EnergyOffers.Update;
-using EnergyTrade.Application.Trades.GetById;
-using EnergyTrade.Application.Trades.GetAll;
+using EnergyTrade.Application.Idempotency;
 using EnergyTrade.Application.Orders.Create;
-using EnergyTrade.Application.Orders.GetById;
-using EnergyTrade.Application.Orders.GetAll;
-using EnergyTrade.Application.Orders.Cancel;
-using EnergyTrade.Application.Orders.Match;
 using EnergyTrade.Application.Positions.ApplyTrade;
 using EnergyTrade.Application.Positions.GetByPortfolio;
-using EnergyTrade.Application.Portfolios.Create;
-using EnergyTrade.Application.Portfolios.GetById;
-using EnergyTrade.Application.Portfolios.GetByUser;
-using EnergyTrade.Application.Portfolios.Rename;
-using EnergyTrade.Application.Portfolios.Close;
-using EnergyTrade.Application.Idempotency;
-using EnergyTrade.Application.Auth.Register;
-using EnergyTrade.Application.Auth.Login;
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EnergyTrade.Application;
 
@@ -34,17 +18,8 @@ public static class DependencyInjection
         services.AddMediatR(config =>
             config.RegisterServicesFromAssemblyContaining<CreateOrderCommandHandler>());
 
-        services.AddScoped<GetTradeByIdService>();
-        services.AddScoped<GetTradesService>();
-
         services.AddScoped<ApplyTradeToPositionsService>();
         services.AddScoped<GetPositionsByPortfolioService>();
-
-        services.AddScoped<CreatePortfolioService>();
-        services.AddScoped<GetPortfolioByIdService>();
-        services.AddScoped<GetPortfoliosByUserService>();
-        services.AddScoped<RenamePortfolioService>();
-        services.AddScoped<ClosePortfolioService>();
 
         services.AddScoped<IdempotencyService>();
         services.AddScoped<IdempotentCreateOrderService>();
