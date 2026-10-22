@@ -6,21 +6,26 @@ using EnergyTrade.Domain.Enums;
 
 namespace EnergyTrade.Application.Tests.Orders.GetById;
 
-public class GetOrderByIdServiceTests
+public class GetOrderByIdQueryHandlerTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenOrderExistsAndBelongsToUser_ReturnsOrder()
+    public async Task Handle_WhenOrderExistsAndBelongsToUser_ReturnsOrder()
     {
         // Arrange
         var order = CreateOrder();
 
         var repository = new FakeOrderRepository(order);
-        var service = new GetOrderByIdService(repository);
 
-        // Act
-        var result = await service.ExecuteAsync(
+        var handler = new GetOrderByIdQueryHandler(repository);
+
+        var query = new GetOrderByIdQuery(
             order.BuyerId,
             order.Id);
+
+        // Act
+        var result = await handler.Handle(
+            query,
+            CancellationToken.None);
 
         // Assert
         Assert.NotNull(result);
@@ -39,37 +44,47 @@ public class GetOrderByIdServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenOrderDoesNotExist_ReturnsNull()
+    public async Task Handle_WhenOrderDoesNotExist_ReturnsNull()
     {
         // Arrange
         var repository = new FakeOrderRepository(null);
-        var service = new GetOrderByIdService(repository);
 
-        // Act
-        var result = await service.ExecuteAsync(
+        var handler = new GetOrderByIdQueryHandler(repository);
+
+        var query = new GetOrderByIdQuery(
             Guid.NewGuid(),
             Guid.NewGuid());
+
+        // Act
+        var result = await handler.Handle(
+            query,
+            CancellationToken.None);
 
         // Assert
         Assert.Null(result);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenOrderBelongsToAnotherUser_ThrowsForbiddenException()
+    public async Task Handle_WhenOrderBelongsToAnotherUser_ThrowsForbiddenException()
     {
         // Arrange
         var order = CreateOrder();
 
         var repository = new FakeOrderRepository(order);
-        var service = new GetOrderByIdService(repository);
+
+        var handler = new GetOrderByIdQueryHandler(repository);
 
         var anotherUserId = Guid.NewGuid();
 
+        var query = new GetOrderByIdQuery(
+            anotherUserId,
+            order.Id);
+
         // Act
         var exception = await Assert.ThrowsAsync<ForbiddenException>(
-            () => service.ExecuteAsync(
-                anotherUserId,
-                order.Id));
+            () => handler.Handle(
+                query,
+                CancellationToken.None));
 
         // Assert
         Assert.Equal(

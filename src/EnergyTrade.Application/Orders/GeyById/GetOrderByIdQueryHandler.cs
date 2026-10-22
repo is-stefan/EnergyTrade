@@ -1,25 +1,26 @@
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Common.Exceptions;
+using MediatR;
 
 namespace EnergyTrade.Application.Orders.GetById;
 
-public sealed class GetOrderByIdService
+public sealed class GetOrderByIdQueryHandler
+    : IRequestHandler<GetOrderByIdQuery, GetOrderByIdResult?>
 {
     private readonly IOrderRepository _orderRepository;
 
-    public GetOrderByIdService(
+    public GetOrderByIdQueryHandler(
         IOrderRepository orderRepository)
     {
         _orderRepository = orderRepository;
     }
 
-    public async Task<GetOrderByIdResult?> ExecuteAsync(
-        Guid userId,
-        Guid id,
-        CancellationToken cancellationToken = default)
+    public async Task<GetOrderByIdResult?> Handle(
+        GetOrderByIdQuery query,
+        CancellationToken cancellationToken)
     {
         var order = await _orderRepository.GetByIdAsync(
-            id,
+            query.Id,
             cancellationToken);
 
         if (order is null)
@@ -27,7 +28,7 @@ public sealed class GetOrderByIdService
             return null;
         }
 
-        if (order.BuyerId != userId)
+        if (order.BuyerId != query.UserId)
         {
             throw new ForbiddenException(
                 "The order does not belong to the authenticated user.");
