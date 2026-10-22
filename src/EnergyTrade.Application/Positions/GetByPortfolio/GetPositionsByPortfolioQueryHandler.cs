@@ -1,14 +1,18 @@
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Common.Exceptions;
+using MediatR;
 
 namespace EnergyTrade.Application.Positions.GetByPortfolio;
 
-public sealed class GetPositionsByPortfolioService
+public sealed class GetPositionsByPortfolioQueryHandler
+    : IRequestHandler<
+        GetPositionsByPortfolioQuery,
+        IReadOnlyList<GetPositionsByPortfolioResult>?>
 {
     private readonly IPositionRepository _positionRepository;
     private readonly IPortfolioRepository _portfolioRepository;
 
-    public GetPositionsByPortfolioService(
+    public GetPositionsByPortfolioQueryHandler(
         IPositionRepository positionRepository,
         IPortfolioRepository portfolioRepository)
     {
@@ -16,13 +20,12 @@ public sealed class GetPositionsByPortfolioService
         _portfolioRepository = portfolioRepository;
     }
 
-    public async Task<IReadOnlyList<GetPositionsByPortfolioResult>?> ExecuteAsync(
-        Guid userId,
-        Guid portfolioId,
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<GetPositionsByPortfolioResult>?> Handle(
+        GetPositionsByPortfolioQuery query,
+        CancellationToken cancellationToken)
     {
         var portfolio = await _portfolioRepository.GetByIdAsync(
-            portfolioId,
+            query.PortfolioId,
             cancellationToken);
 
         if (portfolio is null)
@@ -30,7 +33,7 @@ public sealed class GetPositionsByPortfolioService
             return null;
         }
 
-        if (portfolio.UserId != userId)
+        if (portfolio.UserId != query.UserId)
         {
             throw new ForbiddenException(
                 "The portfolio does not belong to the authenticated user.");
@@ -38,7 +41,7 @@ public sealed class GetPositionsByPortfolioService
 
         var positions =
             await _positionRepository.GetByPortfolioIdAsync(
-                portfolioId,
+                query.PortfolioId,
                 cancellationToken);
 
         return positions

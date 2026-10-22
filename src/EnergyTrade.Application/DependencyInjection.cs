@@ -19,14 +19,10 @@ public static class DependencyInjection
             config.RegisterServicesFromAssemblyContaining<CreateOrderCommandHandler>());
 
         services.AddScoped<ApplyTradeToPositionsService>();
-        services.AddScoped<GetPositionsByPortfolioService>();
 
         services.AddScoped<IdempotencyService>();
         services.AddScoped<IdempotentCreateOrderService>();
         services.AddScoped<IdempotentCreateEnergyOfferService>();
-
-        services.AddScoped<RegisterService>();
-        services.AddScoped<LoginService>();
 
         return services;
     }

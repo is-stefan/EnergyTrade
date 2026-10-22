@@ -6,10 +6,10 @@ using EnergyTrade.Domain.Enums;
 
 namespace EnergyTrade.Application.Tests.Positions.GetByPortfolio;
 
-public class GetPositionsByPortfolioServiceTests
+public class GetPositionsByPortfolioQueryHandlerTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenPositionsExistAndPortfolioBelongsToUser_ReturnsPortfolioPositions()
+    public async Task Handle_WhenPositionsExistAndPortfolioBelongsToUser_ReturnsPortfolioPositions()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -37,14 +37,18 @@ public class GetPositionsByPortfolioServiceTests
         var portfolioRepository = new FakePortfolioRepository(
             portfolio);
 
-        var service = new GetPositionsByPortfolioService(
+        var handler = new GetPositionsByPortfolioQueryHandler(
             positionRepository,
             portfolioRepository);
 
-        // Act
-        var result = await service.ExecuteAsync(
+        var query = new GetPositionsByPortfolioQuery(
             userId,
             portfolio.Id);
+
+        // Act
+        var result = await handler.Handle(
+            query,
+            CancellationToken.None);
 
         // Assert
         Assert.NotNull(result);
@@ -64,7 +68,7 @@ public class GetPositionsByPortfolioServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPortfolioHasNoPositions_ReturnsEmptyList()
+    public async Task Handle_WhenPortfolioHasNoPositions_ReturnsEmptyList()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -79,14 +83,18 @@ public class GetPositionsByPortfolioServiceTests
         var portfolioRepository = new FakePortfolioRepository(
             portfolio);
 
-        var service = new GetPositionsByPortfolioService(
+        var handler = new GetPositionsByPortfolioQueryHandler(
             positionRepository,
             portfolioRepository);
 
-        // Act
-        var result = await service.ExecuteAsync(
+        var query = new GetPositionsByPortfolioQuery(
             userId,
             portfolio.Id);
+
+        // Act
+        var result = await handler.Handle(
+            query,
+            CancellationToken.None);
 
         // Assert
         Assert.NotNull(result);
@@ -94,7 +102,7 @@ public class GetPositionsByPortfolioServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPortfolioDoesNotExist_ReturnsNull()
+    public async Task Handle_WhenPortfolioDoesNotExist_ReturnsNull()
     {
         // Arrange
         var positionRepository = new FakePositionRepository([]);
@@ -102,21 +110,25 @@ public class GetPositionsByPortfolioServiceTests
         var portfolioRepository = new FakePortfolioRepository(
             null);
 
-        var service = new GetPositionsByPortfolioService(
+        var handler = new GetPositionsByPortfolioQueryHandler(
             positionRepository,
             portfolioRepository);
 
-        // Act
-        var result = await service.ExecuteAsync(
+        var query = new GetPositionsByPortfolioQuery(
             Guid.NewGuid(),
             Guid.NewGuid());
+
+        // Act
+        var result = await handler.Handle(
+            query,
+            CancellationToken.None);
 
         // Assert
         Assert.Null(result);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPortfolioBelongsToAnotherUser_ThrowsForbiddenException()
+    public async Task Handle_WhenPortfolioBelongsToAnotherUser_ThrowsForbiddenException()
     {
         // Arrange
         var ownerId = Guid.NewGuid();
@@ -132,15 +144,19 @@ public class GetPositionsByPortfolioServiceTests
         var portfolioRepository = new FakePortfolioRepository(
             portfolio);
 
-        var service = new GetPositionsByPortfolioService(
+        var handler = new GetPositionsByPortfolioQueryHandler(
             positionRepository,
             portfolioRepository);
 
+        var query = new GetPositionsByPortfolioQuery(
+            anotherUserId,
+            portfolio.Id);
+
         // Act
         var exception = await Assert.ThrowsAsync<ForbiddenException>(
-            () => service.ExecuteAsync(
-                anotherUserId,
-                portfolio.Id));
+            () => handler.Handle(
+                query,
+                CancellationToken.None));
 
         // Assert
         Assert.Equal(

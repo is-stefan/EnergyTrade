@@ -1,16 +1,18 @@
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Abstractions.Security;
-using EnergyTrade.Domain.Entities;
 using EnergyTrade.Application.Common.Exceptions;
+using EnergyTrade.Domain.Entities;
+using MediatR;
 
 namespace EnergyTrade.Application.Auth.Register;
 
-public sealed class RegisterService
+public sealed class RegisterCommandHandler
+    : IRequestHandler<RegisterCommand, RegisterResult>
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
 
-    public RegisterService(
+    public RegisterCommandHandler(
         IUserRepository userRepository,
         IPasswordHasher passwordHasher)
     {
@@ -18,26 +20,26 @@ public sealed class RegisterService
         _passwordHasher = passwordHasher;
     }
 
-    public async Task<RegisterResult> ExecuteAsync(
-        RegisterRequest request,
-        CancellationToken cancellationToken = default)
+    public async Task<RegisterResult> Handle(
+        RegisterCommand command,
+        CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.Email))
+        if (string.IsNullOrWhiteSpace(command.Email))
         {
             throw new ArgumentException(
                 "Email cannot be empty.",
-                nameof(request.Email));
+                nameof(command.Email));
         }
 
-        if (string.IsNullOrWhiteSpace(request.Password))
+        if (string.IsNullOrWhiteSpace(command.Password))
         {
             throw new ArgumentException(
                 "Password cannot be empty.",
-                nameof(request.Password));
+                nameof(command.Password));
         }
 
         var normalizedEmail =
-            request.Email.Trim().ToLowerInvariant();
+            command.Email.Trim().ToLowerInvariant();
 
         var emailExists =
             await _userRepository.EmailExistsAsync(
@@ -51,7 +53,7 @@ public sealed class RegisterService
         }
 
         var passwordHash =
-            _passwordHasher.Hash(request.Password);
+            _passwordHasher.Hash(command.Password);
 
         var user = new User(
             normalizedEmail,
