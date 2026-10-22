@@ -1,27 +1,31 @@
 using EnergyTrade.Application.Abstractions.Persistence;
 using EnergyTrade.Application.Common.Exceptions;
 using EnergyTrade.Application.Orders.Cancel;
+using EnergyTrade.Domain.Common.Exceptions;
 using EnergyTrade.Domain.Entities;
 using EnergyTrade.Domain.Enums;
-using EnergyTrade.Domain.Common.Exceptions;
 
 namespace EnergyTrade.Application.Tests.Orders.Cancel;
 
-public class CancelOrderServiceTests
+public class CancelOrderCommandHandlerTests
 {
     [Fact]
-    public async Task ExecuteAsync_WhenOrderExistsAndBelongsToUser_CancelsOrderAndSavesChanges()
+    public async Task Handle_WhenOrderExistsAndBelongsToUser_CancelsOrderAndSavesChanges()
     {
         // Arrange
         var order = CreateValidOrder();
 
         var repository = new FakeOrderRepository(order);
-        var service = new CancelOrderService(repository);
+        var handler = new CancelOrderCommandHandler(repository);
 
-        // Act
-        var result = await service.ExecuteAsync(
+        var command = new CancelOrderCommand(
             order.BuyerId,
             order.Id);
+
+        // Act
+        var result = await handler.Handle(
+            command,
+            CancellationToken.None);
 
         // Assert
         Assert.True(result);
@@ -31,16 +35,20 @@ public class CancelOrderServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenOrderDoesNotExist_ReturnsFalse()
+    public async Task Handle_WhenOrderDoesNotExist_ReturnsFalse()
     {
         // Arrange
         var repository = new FakeOrderRepository(null);
-        var service = new CancelOrderService(repository);
+        var handler = new CancelOrderCommandHandler(repository);
 
-        // Act
-        var result = await service.ExecuteAsync(
+        var command = new CancelOrderCommand(
             Guid.NewGuid(),
             Guid.NewGuid());
+
+        // Act
+        var result = await handler.Handle(
+            command,
+            CancellationToken.None);
 
         // Assert
         Assert.False(result);
@@ -48,21 +56,25 @@ public class CancelOrderServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenOrderBelongsToAnotherUser_ThrowsForbiddenException()
+    public async Task Handle_WhenOrderBelongsToAnotherUser_ThrowsForbiddenException()
     {
         // Arrange
         var order = CreateValidOrder();
 
         var repository = new FakeOrderRepository(order);
-        var service = new CancelOrderService(repository);
+        var handler = new CancelOrderCommandHandler(repository);
 
         var anotherUserId = Guid.NewGuid();
 
+        var command = new CancelOrderCommand(
+            anotherUserId,
+            order.Id);
+
         // Act
         var exception = await Assert.ThrowsAsync<ForbiddenException>(
-            () => service.ExecuteAsync(
-                anotherUserId,
-                order.Id));
+            () => handler.Handle(
+                command,
+                CancellationToken.None));
 
         // Assert
         Assert.Equal(
@@ -73,39 +85,47 @@ public class CancelOrderServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenOrderIsAlreadyCancelled_ThrowsBusinessRuleException()
+    public async Task Handle_WhenOrderIsAlreadyCancelled_ThrowsBusinessRuleException()
     {
         // Arrange
         var order = CreateValidOrder();
         order.Cancel();
 
         var repository = new FakeOrderRepository(order);
-        var service = new CancelOrderService(repository);
+        var handler = new CancelOrderCommandHandler(repository);
 
-        // Act & Assert
+        var command = new CancelOrderCommand(
+            order.BuyerId,
+            order.Id);
+
+        // Act + Assert
         await Assert.ThrowsAsync<BusinessRuleException>(
-            () => service.ExecuteAsync(
-                order.BuyerId,
-                order.Id));
+            () => handler.Handle(
+                command,
+                CancellationToken.None));
 
         Assert.Equal(0, repository.SaveChangesCallCount);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenOrderIsFilled_ThrowsBusinessRuleException()
+    public async Task Handle_WhenOrderIsFilled_ThrowsBusinessRuleException()
     {
         // Arrange
         var order = CreateValidOrder();
         order.Fill();
 
         var repository = new FakeOrderRepository(order);
-        var service = new CancelOrderService(repository);
+        var handler = new CancelOrderCommandHandler(repository);
 
-        // Act & Assert
+        var command = new CancelOrderCommand(
+            order.BuyerId,
+            order.Id);
+
+        // Act + Assert
         await Assert.ThrowsAsync<BusinessRuleException>(
-            () => service.ExecuteAsync(
-                order.BuyerId,
-                order.Id));
+            () => handler.Handle(
+                command,
+                CancellationToken.None));
 
         Assert.Equal(0, repository.SaveChangesCallCount);
     }
