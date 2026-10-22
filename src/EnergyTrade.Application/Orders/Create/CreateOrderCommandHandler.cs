@@ -28,12 +28,6 @@ public sealed class CreateOrderCommandHandler
         CreateOrderCommand command,
         CancellationToken cancellationToken)
     {
-        if (command.UserId == Guid.Empty)
-        {
-            throw new ArgumentException(
-                "User id cannot be empty.",
-                nameof(command.UserId));
-        }
 
         var portfolio = await _portfolioRepository.GetByIdAsync(
             command.PortfolioId,
