@@ -12,6 +12,8 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Metrics;
 using EnergyTrade.Infrastructure.Observability;
+using EnergyTrade.Api.Grpc;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,6 +68,8 @@ builder.Logging.AddSimpleConsole(options =>
     options.IncludeScopes = true;
 });
 
+builder.Services.AddGrpc();
+
 builder.Services
     .AddOpenTelemetry()
     .ConfigureResource(resource =>
@@ -85,7 +89,20 @@ builder.Services
             .AddMeter(EnergyTradeMetrics.MeterName)
             .AddConsoleExporter();
     });
-    
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenLocalhost(5087, listenOptions =>
+    {
+        listenOptions.Protocols = HttpProtocols.Http1;
+    });
+
+    options.ListenLocalhost(5088, listenOptions =>
+    {
+        listenOptions.Protocols = HttpProtocols.Http2;
+    });
+});
+ 
 var app = builder.Build();
 
 app.UseMiddleware<CorrelationIdMiddleware>();
@@ -102,6 +119,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapGrpcService<TradeGrpcService>();
 
 app.MapControllers();
 
