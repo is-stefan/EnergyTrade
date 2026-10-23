@@ -2,6 +2,7 @@ using EnergyTrade.Application.Abstractions.Authentication;
 using EnergyTrade.Application.Trades.GetAll;
 using EnergyTrade.Application.Trades.GetById;
 using EnergyTrade.Domain.Enums;
+using EnergyTrade.Application.Trades.Summary;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -58,6 +59,24 @@ public class TradesController : ControllerBase
                 energyType,
                 page,
                 pageSize),
+            cancellationToken);
+
+        return Ok(result);
+    }
+
+    [HttpGet("summary")]
+    public async Task<ActionResult<TradeSummaryResult>> GetSummary(
+        [FromQuery] Currency currency,
+        [FromQuery] EnergyType? energyType,
+        CancellationToken cancellationToken)
+    {
+        var userId = _currentUserService.UserId;
+
+        var result = await _sender.Send(
+            new GetTradeSummaryQuery(
+                userId,
+                currency,
+                energyType),
             cancellationToken);
 
         return Ok(result);

@@ -6,6 +6,7 @@ using EnergyTrade.Application.Orders.Create;
 using EnergyTrade.Application.Positions.ApplyTrade;
 using EnergyTrade.Application.Positions.GetByPortfolio;
 using EnergyTrade.Application.Common.Behaviors;
+using EnergyTrade.Application.Abstractions.Persistence;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using FluentValidation;
