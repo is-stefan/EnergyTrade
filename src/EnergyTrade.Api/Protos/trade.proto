@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+option csharp_namespace = "EnergyTrade.Api.Grpc";
+
+package trades;
+
+service TradeService {
+  rpc GetTrade (GetTradeRequest) returns (TradeReply);
+}
+
+message GetTradeRequest {
+  string trade_id = 1;
+}
+
+message TradeReply {
+  string id = 1;
+  string energy_offer_id = 2;
+  string seller_id = 3;
+  string buyer_id = 4;
+  int32 energy_type = 5;
+  double quantity_mwh = 6;
+  double price_per_mwh = 7;
+  int32 currency = 8;
+  string created_at = 9;
+}
