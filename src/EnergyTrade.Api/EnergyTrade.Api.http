@@ -19,7 +19,39 @@ Content-Type: application/json
   "password": "Password123!"
 }
 
-### MATCH ORDER
+### 
 
-POST http://localhost:5087/api/orders/120ab032-ff1c-463e-a7f4-6dd7e6553b8f/match
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0NjRiMjNiNC1jOTRiLTRlNWUtYjFjNC0wZjIzNjI0MjQ2MzUiLCJlbWFpbCI6InN0ZWZhbi5hdXRoQHRlc3QuY29tIiwianRpIjoiYmQ0MWY3Y2ItZTczNy00NTRmLWEyMzEtNjg1ODM2MWUxMDM3IiwiZXhwIjoxNzkyNjIyMjQyLCJpc3MiOiJFbmVyZ3lUcmFkZSIsImF1ZCI6IkVuZXJneVRyYWRlIn0.luNz-7OC7P6DMdvRdwC7Gbaqrao2kzaAl1DnQKhcg_8
+GET http://localhost:5087/api/energy-offers
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NzNmNjVmMi04YzMwLTRmMDItOWMwYS0wMTI3ZjNhNDRiNmIiLCJlbWFpbCI6InNlY29uZC51c2VyQHRlc3QuY29tIiwianRpIjoiZTJjYzYyYjAtZmVkZS00NGQ0LWJkMjktOTZlYjU4NWY2NzEyIiwiZXhwIjoxNzkyNzY3Nzg2LCJpc3MiOiJFbmVyZ3lUcmFkZSIsImF1ZCI6IkVuZXJneVRyYWRlIn0.gZgzuUtiyP2i51mczyoQFyWWf6YHXHLVrfkJn4koERU
+
+###
+
+GET http://localhost:5087/api/portfolios/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NzNmNjVmMi04YzMwLTRmMDItOWMwYS0wMTI3ZjNhNDRiNmIiLCJlbWFpbCI6InNlY29uZC51c2VyQHRlc3QuY29tIiwianRpIjoiZTJjYzYyYjAtZmVkZS00NGQ0LWJkMjktOTZlYjU4NWY2NzEyIiwiZXhwIjoxNzkyNzY3Nzg2LCJpc3MiOiJFbmVyZ3lUcmFkZSIsImF1ZCI6IkVuZXJneVRyYWRlIn0.gZgzuUtiyP2i51mczyoQFyWWf6YHXHLVrfkJn4koERU
+
+###
+
+POST http://localhost:5087/api/energy-offers
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NzNmNjVmMi04YzMwLTRmMDItOWMwYS0wMTI3ZjNhNDRiNmIiLCJlbWFpbCI6InNlY29uZC51c2VyQHRlc3QuY29tIiwianRpIjoiZTJjYzYyYjAtZmVkZS00NGQ0LWJkMjktOTZlYjU4NWY2NzEyIiwiZXhwIjoxNzkyNzY3Nzg2LCJpc3MiOiJFbmVyZ3lUcmFkZSIsImF1ZCI6IkVuZXJneVRyYWRlIn0.gZgzuUtiyP2i51mczyoQFyWWf6YHXHLVrfkJn4koERU
+Content-Type: application/json
+Idempotency-Key: trigger-test-offer-001
+
+{
+  "portfolioId": "aee89a60-801e-447b-b7fc-23c035921e77",
+  "energyType": 1,
+  "quantityMWh": 100,
+  "pricePerMWh": 80,
+  "currency": 1,
+  "deliveryStart": "2026-10-24T00:00:00Z",
+  "deliveryEnd": "2026-11-24T00:00:00Z"
+}
+
+###
+
+PATCH http://localhost:5087/api/energy-offers/2c17a7b5-90c8-4cf5-b869-0cdfbaf0285e/cancel
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NzNmNjVmMi04YzMwLTRmMDItOWMwYS0wMTI3ZjNhNDRiNmIiLCJlbWFpbCI6InNlY29uZC51c2VyQHRlc3QuY29tIiwianRpIjoiZTJjYzYyYjAtZmVkZS00NGQ0LWJkMjktOTZlYjU4NWY2NzEyIiwiZXhwIjoxNzkyNzY3Nzg2LCJpc3MiOiJFbmVyZ3lUcmFkZSIsImF1ZCI6IkVuZXJneVRyYWRlIn0.gZgzuUtiyP2i51mczyoQFyWWf6YHXHLVrfkJn4koERU
+
+###
+
+PATCH http://localhost:5087/api/energy-offers/2c17a7b5-90c8-4cf5-b869-0cdfbaf0285e/cancel
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NzNmNjVmMi04YzMwLTRmMDItOWMwYS0wMTI3ZjNhNDRiNmIiLCJlbWFpbCI6InNlY29uZC51c2VyQHRlc3QuY29tIiwianRpIjoiZTJjYzYyYjAtZmVkZS00NGQ0LWJkMjktOTZlYjU4NWY2NzEyIiwiZXhwIjoxNzkyNzY3Nzg2LCJpc3MiOiJFbmVyZ3lUcmFkZSIsImF1ZCI6IkVuZXJneVRyYWRlIn0.gZgzuUtiyP2i51mczyoQFyWWf6YHXHLVrfkJn4koERU

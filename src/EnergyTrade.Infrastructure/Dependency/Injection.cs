@@ -44,6 +44,16 @@ public static class DependencyInjection
 
         services.AddSingleton<IBusinessMetrics, EnergyTradeMetrics>();
 
+        services.AddScoped<
+            ITradeSummaryRepository,
+            TradeSummaryRepository>();
+
+
+         services.AddScoped<
+            IPortfolioExposureRepository,
+            PortfolioExposureRepository>();
+
         return services;
+        
     }
 }

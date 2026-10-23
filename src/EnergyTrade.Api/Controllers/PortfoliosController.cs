@@ -4,6 +4,7 @@ using EnergyTrade.Application.Portfolios.Create;
 using EnergyTrade.Application.Portfolios.GetById;
 using EnergyTrade.Application.Portfolios.GetByUser;
 using EnergyTrade.Application.Portfolios.Rename;
+using EnergyTrade.Application.Portfolios.Exposure;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -121,5 +122,21 @@ public class PortfoliosController : ControllerBase
         }
 
         return NoContent();
+    }
+
+    [HttpGet("{id:guid}/exposure")]
+    public async Task<ActionResult<decimal>> GetExposure(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var userId = _currentUserService.UserId;
+
+        var result = await _sender.Send(
+            new GetPortfolioExposureQuery(
+                userId,
+                id),
+            cancellationToken);
+
+        return Ok(result);
     }
 }
